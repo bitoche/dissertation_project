@@ -1,0 +1,9 @@
+# creadintals 
+.env
+
+# cache folders
+__pychache__
+
+#log files
+*.log
+
