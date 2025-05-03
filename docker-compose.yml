@@ -1,0 +1,12 @@
+version: '0.1'
+
+services:
+  api:
+    build: .
+    container_name: dissertation_api
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app

@@ -2,7 +2,7 @@
 .env
 
 # cache folders
-__pychache__
+__pycache__
 
 # log files
 *.log
