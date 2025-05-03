@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 from os.path import join as join_path 
 from os import makedirs
 from config import log_config

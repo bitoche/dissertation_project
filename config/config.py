@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 from dotenv import load_dotenv
 from os import getenv
 import logging
