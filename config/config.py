@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 from dotenv import load_dotenv
 from os import getenv
 import logging
@@ -19,6 +19,7 @@ def env(var_name:str, default: any = None):
             e = KeyError(f'Param {var_name} not found in .env')
             raise e
     else:
+        log.debug(f'Found {var_name} in .env. Recieved variable of type "{type(_v)}"')
         return _v
 
 class DBConfig():

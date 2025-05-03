@@ -1,9 +1,11 @@
-# creadintals 
+# credintals 
 .env
 
 # cache folders
 __pychache__
 
-#log files
+# log files
 *.log
 
+# virtual env
+.venv
