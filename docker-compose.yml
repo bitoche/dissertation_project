@@ -1,4 +1,17 @@
 services:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+  celery_worker:
+    build: .
+    command: celery -A src.tasks.celery worker --loglevel=info
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
   api:
     build: 
       context: .

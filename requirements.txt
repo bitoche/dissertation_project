@@ -3,5 +3,7 @@ uvicorn[standard]
 fastapi
 pydantic
 psycopg2-binary
+celery
+redis
 
 python-dotenv==1.1.0

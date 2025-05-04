@@ -36,10 +36,13 @@ def health_check():
 async def get_status(task_type: str, calc_id: int):
     match task_type:
         case 'reports_task':
-            return {"status": check_reports_task_status(calc_id)}
+            return check_reports_task_status(calc_id)
     return {"status": "error"}
 
 @app.post(f"/{VERSIONS.CALCULATOR}/startCalc", tags=_CALC)
 async def add_report_task(item: StartReportItem):
-    return start_reports_task(item)
+    task_data = item.model_dump()
+    app_log.info(item.model_dump())
+    task = start_reports_task.delay(task_data)
+    return {"status": "recieved", "task_id": task.id}
 
