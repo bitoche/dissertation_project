@@ -1,7 +1,11 @@
 # from src.app.gateway import app
-from src.db_connection import get_connection_row
+from src.db_connection import get_connection_row, check_connection_status
 from src.model.interface import GeneralInfo
-from src.handlers import get_param
+from src.handlers import get_param, timer
+from config.log_config import setup_logging
+import logging
+app_log = logging.getLogger('app')
+mf_log = app_log.getChild('main')
 
 calc_statuses = {}
 class CalcStatus():
@@ -28,19 +32,24 @@ class CalcStatus():
             "message": self.message
         }
 
-
+@timer
 def main_func(item: GeneralInfo):
     calc_id = item.calc_id
     report_date = item.report_date
     prev_report_date = item.prev_report_date
     actual_date = item.actual_date
-
+    mf_log.info(f'Started task: (calc_id={calc_id}, report_date={report_date}, prev_report_date={prev_report_date}, actual_date={actual_date})')
     _status = CalcStatus(
         percent=1, 
         status="in_progress", 
         message="started",
         calc_id=calc_id
     )
+    if (check_connection_status()=="not connected"):
+        _status._upd(-1, "error", "db connection does not exists", calc_id)
+        return _status.get_dict_status()
+    
+    
 
     # load configuration
     # upgrade refs?
@@ -54,5 +63,9 @@ def main_func(item: GeneralInfo):
 
 def get_calc_status(calc_id:int):
     global calc_statuses
-    found = get_param("not found", calc_statuses, [calc_id])
+    try:
+        found = calc_statuses[calc_id]
+    except:
+        found = "not found"
+    app_log.info(f'Status of {calc_id} calc is {found}')
     return found.get_dict_status() if found != "not found" else found

@@ -2,7 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from os import getenv
 import logging
-log = logging.getLogger('configuration')
+# log = logging.getLogger('configuration')
 
 
 def env(var_name:str, default: any = None):
@@ -13,13 +13,13 @@ def env(var_name:str, default: any = None):
     _v = getenv(var_name)
     if _v == None:
         if default is not None:
-            log.warning(f'Param {var_name} not found in .env. Filled to default ({default})')
+            logging.warning(f'Param {var_name} not found in .env. Filled to default ({default})')
             return default
         else:
             e = KeyError(f'Param {var_name} not found in .env')
             raise e
     else:
-        log.debug(f'Found {var_name} in .env. Recieved variable of type "{type(_v)}"')
+        logging.debug(f'Found {var_name} in .env. Recieved variable of type "{type(_v)}"')
         return _v
 
 class DBConfig():
@@ -28,6 +28,11 @@ class DBConfig():
     DB_USER = env('DB_USER')
     DB_PASS = env('DB_PASS')
     DB_NAME = env('DB_NAME')
+    class ShemasConfig():
+        DB_SCHEMA_INPUT_DATA=env('DB_SCHEMA_INPUT_DATA')
+        DB_SCHEMA_REPORTS=env('DB_SCHEMA_REPORTS')
+        DB_SCHEMA_REFERENCES=env('DB_SCHEMA_REFERENCES')
+        DB_SCHEMA_SANDBOX=env('DB_SCHEMA_SANDBOX')
     
 class AppConfig():
     # parameters of api

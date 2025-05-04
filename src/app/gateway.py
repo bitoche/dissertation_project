@@ -3,6 +3,8 @@ from config.config import VERSIONS
 from src.model.interface import StartReportItem
 from .worker_tasks.tasks import *
 from ..db_connection import check_connection_status as check_db_connection_status
+import logging
+app_log = logging.getLogger('app')
 
 app = FastAPI(title="Reports Service API", 
               version=VERSIONS.API,
@@ -11,6 +13,7 @@ app = FastAPI(title="Reports Service API",
 _CALC = ['Calculation functions']
 _API = ['API']
 
+app_log.info(f'---------------------- Started Application! ----------------------')
 # @app.get("/ver")
 # def version_check():
 #     return {'api_version':VERSIONS.API,

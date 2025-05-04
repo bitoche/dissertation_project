@@ -1,10 +1,10 @@
 import logging
 from os.path import join as join_path 
 from os import makedirs
-from config import log_config
+from .config import LoggingConfig
 
-LOG_LEVEL = log_config.LOG_LEVEL
-LOGS_PATH = log_config.LOGS_PATH
+LOG_LEVEL = LoggingConfig.LOG_LEVEL
+LOGS_PATH = LoggingConfig.LOGS_PATH
 LOG_FILE = join_path(LOGS_PATH, 'app.log')
 makedirs(LOGS_PATH, exist_ok=True)
 
@@ -15,7 +15,7 @@ def setup_logging():
         'disable_existing_loggers': False,
         'formatters': {
             'default': {
-                'format': '[%(asctime)s || %(levelname)s || %(name)s] %(message)s',
+                'format': '[%(asctime)s | %(levelname)s\t| %(name)s] %(message)s',
             },
         },
         'handlers': {
@@ -31,14 +31,30 @@ def setup_logging():
             },
         },
         'loggers': {
-            'configuration': {
-                'handlers': ['console', 'file'],
+            'app': {
+                'handlers': ['file'],
                 'level': LOG_LEVEL,
                 'propagate': False,
             },
-            'calculation': {
-                'handlers': ['console', 'file'],
-                'level': LOG_LEVEL,
+            # only console out at bottom
+            'uvicorn': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'uvicorn.error': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'uvicorn.access': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'fastapi': {
+                'handlers': ['console'],
+                'level': 'INFO',
                 'propagate': False,
             },
         },
@@ -48,3 +64,5 @@ def setup_logging():
         }
     })
     logging.info(f'Setted log out to file "{LOG_FILE}" with level "{LOG_LEVEL}"')
+
+setup_logging()

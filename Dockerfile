@@ -1,4 +1,4 @@
-# import official python-mount
+# import official python image
 FROM python:alpine
 
 # set up workdir
@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 5000
 
 # start app
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["python", "-m", "uvicorn", "src.app.gateway:app", "--host", "0.0.0.0", "--port", "5000"]

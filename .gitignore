@@ -3,9 +3,12 @@
 
 # cache folders
 __pycache__
+.vscode
 
 # log files
 *.log
 
 # virtual env
 .venv
+
+!.gitkeep
