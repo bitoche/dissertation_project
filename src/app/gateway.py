@@ -1,19 +1,37 @@
 from fastapi import FastAPI
 from config.config import VERSIONS
 from src.model.interface import StartReportItem
+from .worker_tasks.tasks import *
+from ..db_connection import check_connection_status as check_db_connection_status
 
-app=FastAPI()
+app = FastAPI(title="Reports Service API", 
+              version=VERSIONS.API,
+              root_path="/python/api")
 
+_CALC = ['Calculation functions']
+_API = ['API']
 
 # @app.get("/ver")
 # def version_check():
 #     return {'api_version':VERSIONS.API,
 #             'calculator_version':VERSIONS.CALCULATOR}
 
-@app.get(f"/{VERSIONS.API}/health")
+@app.get(f"/health", tags=_API)
 def health_check():
-    return {"status": "ok"}
+    statuses = {
+        "db_connection_status": check_db_connection_status(),
+        "calculator_status": "ok"
+    }
+    return statuses
 
-@app.post(f"/{VERSIONS.CALCULATOR}/startCalc")
+@app.get("/getStatus/{task_type}/{calc_id}", tags=_API)
+def get_status(task_type: str, calc_id: int):
+    match task_type:
+        case 'reports_task':
+            return {"status": check_reports_task_status(calc_id)}
+    return {"status": "error"}
+
+@app.post(f"/{VERSIONS.CALCULATOR}/startCalc", tags=_CALC)
 def add_report_task(item: StartReportItem):
-    pass
+    return start_reports_task(item)
+

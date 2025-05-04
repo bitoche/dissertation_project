@@ -5,5 +5,5 @@ class StartReportItem(BaseModel):
     report_date: str = ''
     actual_date: str = ''
     prev_report_date: str = ''
-    type: str = 'start_report_item'
+    type: str = 'reports_task'
 

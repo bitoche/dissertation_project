@@ -20,7 +20,7 @@ install:
 	$(PIP) install -r requirements.txt
 
 run:
-	$(PYTHON) -m uvicorn main:app --reload --host 0.0.0.0 --port 5000
+	$(PYTHON) -m uvicorn src.app.gateway:app --reload --host 0.0.0.0 --port 5000
 
 clean:
 	rm -rf $(VENV_PATH)
