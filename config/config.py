@@ -35,9 +35,13 @@ class AppConfig():
 
 class LoggingConfig():
     LOG_LEVEL = env('LOGGING_LEVEL', 'INFO')
-    LOGS_PATH = Path.cwd() / 'src' / 'logs'
+    LOGS_PATH = env('LOGS_PATH', './logs')
 
 class ModuleConfig():
     SCRIPTS_PATH = env('MODULE_SCRIPTS_PATH')
     INPUT_FILES_PATH = env('MODULE_INPUT_FILES_PATH')
     OUTPUT_FILES_PATH = env('MODULE_OUTPUT_FILES_PATH')
+
+class VERSIONS():
+    API = env('API_VERSION', 'v0')
+    CALCULATOR = env('CALCULATOR_VERSION', 'v0')
