@@ -1,1 +1,1 @@
-from src.app.app import app
+from src.app.gateway import app

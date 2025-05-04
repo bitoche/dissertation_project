@@ -1,5 +1,6 @@
 uvicorn[standard]
 
 fastapi
+pydantic
 
 python-dotenv==1.1.0
