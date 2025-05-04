@@ -1,8 +1,8 @@
 from config.config import DBConfig
 import psycopg2
-from .handlers import replace_all, suppress
+from .handlers import replace_all, timer
 import logging
-logger = logging.getLogger('app')
+logger = logging.getLogger('app').getChild('db_conn')
 
 def get_connection_row():
     row = replace_all(
@@ -17,7 +17,14 @@ def get_connection_row():
     logger.debug(f'Get connection row: {row}')
     return 
 
+@timer
 def check_connection_status():
-    res = suppress(psycopg2.connect, get_connection_row())
-    logger.debug(f'Get db connection status: {res}')
-    return "ok" if res != "error" else "not connected"
+    logger.debug(f'Get db connection status')
+    try:
+        conn_str = get_connection_row()
+        with psycopg2.connect(conn_str) as conn:
+            logger.debug(f'Successfully connected to DB.')
+            return "ok"
+    except Exception as e:
+        logger.error(f"Connection error: {e}")
+        return "not connected"

@@ -5,7 +5,8 @@ from .config import LoggingConfig
 
 LOG_LEVEL = LoggingConfig.LOG_LEVEL
 LOGS_PATH = LoggingConfig.LOGS_PATH
-LOG_FILE = join_path(LOGS_PATH, 'app.log')
+LOG_FILE = join_path(LOGS_PATH, 'reports.log')
+API_LOG_FILE = join_path(LOGS_PATH, 'reports_api.log')
 makedirs(LOGS_PATH, exist_ok=True)
 
 
@@ -14,21 +15,29 @@ def setup_logging():
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
-            'default': {
-                'format': '[%(asctime)s | %(levelname)s\t| %(name)s] %(message)s',
+            'time_level_name': {
+                'format': '[ %(asctime)-10s | %(levelname)-8s | %(name)-10s ] %(message)s',
             },
+            'console': {
+                'format': '%(asctime)s | %(message)s'
+            }
         },
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
-                'formatter': 'default',
+                'formatter': 'console',
+            },
+            'api_file': {
+                'filename': API_LOG_FILE,
+                'class': 'logging.FileHandler',
+                'formatter': 'time_level_name'
             },
             'file': {
                 'class': 'logging.FileHandler',
                 'filename': LOG_FILE,
-                'formatter': 'default',
+                'formatter': 'time_level_name',
                 'mode': 'a',
-            },
+            }
         },
         'loggers': {
             'app': {
@@ -38,28 +47,28 @@ def setup_logging():
             },
             # only console out at bottom
             'uvicorn': {
-                'handlers': ['console'],
+                'handlers': ['console', 'api_file'],
                 'level': 'INFO',
                 'propagate': False,
             },
             'uvicorn.error': {
-                'handlers': ['console'],
+                'handlers': ['console', 'api_file'],
                 'level': 'INFO',
                 'propagate': False,
             },
             'uvicorn.access': {
-                'handlers': ['console'],
+                'handlers': ['console', 'api_file'],
                 'level': 'INFO',
                 'propagate': False,
             },
             'fastapi': {
-                'handlers': ['console'],
+                'handlers': ['console', 'api_file'],
                 'level': 'INFO',
                 'propagate': False,
             },
         },
         'root': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'WARNING',
         }
     })

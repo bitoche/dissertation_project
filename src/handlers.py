@@ -1,5 +1,5 @@
 import logging
-logger = logging.getLogger("app")
+logger = logging.getLogger("app").getChild('handlers')
 
 def replace_all(text:str, replacements:dict):
     for k,v in replacements.items():
