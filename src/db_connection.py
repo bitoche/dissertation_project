@@ -15,7 +15,7 @@ def get_connection_row():
         "dbname": DBConfig.DB_NAME
     }) 
     logger.debug(f'Get connection row: {row}')
-    return 
+    return row
 
 @timer
 def check_connection_status():
