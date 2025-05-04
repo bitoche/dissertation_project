@@ -1,6 +1,7 @@
 services:
   api:
-    build: .
+    build: 
+      context: .
     container_name: dissertation_api
     ports:
       - "5000:5000"
@@ -8,3 +9,4 @@ services:
       - .env
     volumes:
       - .:/app
+      - ./logs:/app/logs

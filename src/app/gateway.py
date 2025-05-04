@@ -25,7 +25,12 @@ def health_check():
         "db_connection_status": check_db_connection_status(),
         "calculator_status": "ok"
     }
-    return statuses
+    check_result = "good"
+    for k,v in statuses.items():
+        if v!="ok":
+            check_result = "bad"
+        
+    return {"check_result": check_result, "modules_statuses": statuses}
 
 @app.get("/getStatus/{task_type}/{calc_id}", tags=_API)
 async def get_status(task_type: str, calc_id: int):

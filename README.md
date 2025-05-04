@@ -5,6 +5,8 @@
 #### Подготовка
 - `sudo apt install make` -- установить make
 - `sudo apt install python3 python3-venv` -- установить python3 и venv
+- `sudo usermod -aG docker $USER`, `newgrp docker` -- дать права запуска `docker` без sudo
+- `sudo usermod -aG make $USER`, `newgrp make` -- дать права запуска `make` без sudo
 ---
 1. `make init` -- cоздать окружение
 2. `source .venv/bin/activate` -- активировать окружение в терминале
