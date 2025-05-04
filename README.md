@@ -2,6 +2,10 @@
 
 ## ***Запуск проекта***
 ### Запуск без **DOCKER**
+#### Подготовка
+- `sudo apt install make` -- установить make
+- `sudo apt install python3 python3-venv` -- установить python3 и venv
+---
 1. `make init` -- cоздать окружение
 2. `source .venv/bin/activate` -- активировать окружение в терминале
 3. `make run` -- устанавливает зависимости и запускает проект
