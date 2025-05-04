@@ -40,7 +40,7 @@ class AppConfig():
 
 class LoggingConfig():
     LOG_LEVEL = env('LOGGING_LEVEL', 'INFO')
-    LOGS_PATH = env('LOGS_PATH', './logs')
+    LOGS_PATH = env('LOGS_PATH', '/logs')
 
 class ModuleConfig():
     SCRIPTS_PATH = env('MODULE_SCRIPTS_PATH')
@@ -48,5 +48,5 @@ class ModuleConfig():
     OUTPUT_FILES_PATH = env('MODULE_OUTPUT_FILES_PATH')
 
 class VERSIONS():
-    API = env('API_VERSION', 'v0')
-    CALCULATOR = env('CALCULATOR_VERSION', 'v0')
+    API = env('API_VERSION', 'v1-auto-assigned')
+    CALCULATOR = env('CALCULATOR_VERSION', 'v1-auto-assigned')
