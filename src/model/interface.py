@@ -1,9 +1,11 @@
 from pydantic import BaseModel
 
-class StartReportItem(BaseModel):
+class GeneralInfo(BaseModel):
     calc_id: int = 111
     report_date: str = ''
     actual_date: str = ''
     prev_report_date: str = ''
-    type: str = 'reports_task'
 
+class StartReportItem(BaseModel):
+    item: GeneralInfo
+    type: str = 'reports_task'

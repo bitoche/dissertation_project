@@ -25,13 +25,13 @@ def health_check():
     return statuses
 
 @app.get("/getStatus/{task_type}/{calc_id}", tags=_API)
-def get_status(task_type: str, calc_id: int):
+async def get_status(task_type: str, calc_id: int):
     match task_type:
         case 'reports_task':
             return {"status": check_reports_task_status(calc_id)}
     return {"status": "error"}
 
 @app.post(f"/{VERSIONS.CALCULATOR}/startCalc", tags=_CALC)
-def add_report_task(item: StartReportItem):
+async def add_report_task(item: StartReportItem):
     return start_reports_task(item)
 
