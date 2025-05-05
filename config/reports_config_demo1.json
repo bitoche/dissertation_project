@@ -1,0 +1,24 @@
+{    
+    "activated_reports": [
+        "amt"
+    ],
+    "all_reports": [
+        "demo",
+        "amt",
+        "pl"
+    ],
+    "refs": {
+        "ref_group_attrs":{
+            "filename": "Справочник атрибутов групп договоров.xlsx",
+            "header": 1
+        },
+        "ref_product": {
+            "filename": "Справочник наименований продуктов.xlsx",
+            "header": 1
+        },
+        "ref_onerous_type": {
+            "filename": "Справочник типов обременительности.xlsx",
+            "header": 1
+        }
+    }
+}
