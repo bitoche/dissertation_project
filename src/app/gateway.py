@@ -14,10 +14,7 @@ _CALC = ['Calculation functions']
 _API = ['API']
 
 app_log.info(f'---------------------- Started Application! ----------------------')
-# @app.get("/ver")
-# def version_check():
-#     return {'api_version':VERSIONS.API,
-#             'calculator_version':VERSIONS.CALCULATOR}
+
 
 @app.get(f"/health", tags=_API)
 def health_check():
