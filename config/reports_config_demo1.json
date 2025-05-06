@@ -1,4 +1,4 @@
-{    
+{
     "activated_reports": [
         "amt"
     ],
@@ -7,8 +7,99 @@
         "amt",
         "pl"
     ],
+    "sources": {
+        "attributes": {
+            "res_groups_ifrs_17": {
+                "columns": [
+                    "group_id",
+                    "cohort_cd",
+                    "inception_dt",
+                    "ifrs_approach_cd",
+                    "classification_category_cd",
+                    "ifrs_onerous_type",
+                    "direct_participation_flag",
+                    "discret_participation_flag",
+                    "portfolio_cd",
+                    "currency_cd",
+                    "calc_id",
+                    "business_line_cd",
+                    "policy_type_cd",
+                    "investment_strategy_cd",
+                    "product_name"
+                ],
+                "primary_key_columns": [
+                    "group_id",
+                    "calc_id"
+                ],
+                "additional_columns": {
+                    "inception_year": "datepart('year', inception_dt)",
+                    "inception_month": "datepart('month', inception_dt)",
+                    "report_year": "datepart('year', '&report_date'::date)",
+                    "report_month": "datepart('month', '&report_date'::date)"
+                },
+                "using_variables":[
+                    "report_date"
+                ]
+            }
+        },
+        "amounts": {
+            "result_amount_gr": {
+                "columns": [
+                    "calc_id",
+                    "group_id",
+                    "currency_cd",
+                    "amount_type_cd",
+                    "amount_amt"
+                ],
+                "primary_key_columns": [
+                    "group_id",
+                    "calc_id",
+                    "amount_type_cd"
+                ],
+                "amount_columns": [
+                    "amount_amt"
+                ]
+            }
+        }
+    },
+    "reports": {
+        "amt": {
+            "report_name": "rep_ifrs17_amt",
+            "group_attributes_source": "res_groups_ifrs_17",
+            "group_amounts_source": "result_amount_gr",
+            "initial_columns": [
+                "calc_id",
+                "inception_year",
+                "report_year",
+                "inception_month",
+                "report_month",
+                "group_id",
+                "portfolio_cd"
+            ],
+            "mart_structure": {
+                "table_name": "rep_ifrs17_amt",
+                "columns": [
+                    "report_date",
+                    "calc_id",
+                    "ifrs_approach_cd", 
+                    "group_id", 
+                    "portfolio_cd", 
+                    "cohort_cd",
+                    "report_item_desc",
+                    "amount_amt"
+                ],
+                "using_constructor": {
+                    "filename": "constructor_rep_amt.xlsx",
+                    "constructor_sheet_name": "constructor"
+                },
+                "using_refs": [
+                    "ref_report_items"
+                ]
+            }
+        }
+    },
     "refs": {
-        "ref_group_attrs":{
+        "ref_group_attrs": {
             "filename": "Справочник атрибутов групп договоров.xlsx",
             "header": 1
         },

@@ -3,8 +3,10 @@ from src.db_connection import get_connection_row, check_connection_status
 from src.model.interface import GeneralInfo
 from src.handlers import get_param, timer
 from config.log_config import setup_logging
+from config.config import AppConfig
+from src.configurator import read_configuration_file, ReportsConfigurationModel
 import logging
-app_log = logging.getLogger('app')
+app_log = logging.getLogger('app').getChild('rep')
 mf_log = app_log.getChild('main')
 
 calc_statuses = {}
@@ -34,6 +36,7 @@ class CalcStatus():
 
 @timer
 def main_func(item: GeneralInfo):
+    # recieving start params
     calc_id = item.calc_id
     report_date = item.report_date
     prev_report_date = item.prev_report_date
@@ -45,12 +48,20 @@ def main_func(item: GeneralInfo):
         message="started",
         calc_id=calc_id
     )
+    # db connection check
     if (check_connection_status()=="not connected"):
-        _status._upd(-1, "error", "db connection does not exists", calc_id)
+        _status._upd(None, "error", "db connection does not exists", calc_id)
         return _status.get_dict_status()
     
-    
+    # reading reports configuration
+    reports_config_data = read_configuration_file(AppConfig.PROJ_PARAM)
+    reports_config = ReportsConfigurationModel(reports_config_data)
+    activated_reports = reports_config.activated_reports
+    refs_configuration = reports_config.refs
 
+    all_ref_names = [ref_name for ref_name,ref_config in refs_configuration.items()]
+    for ref in all_ref_names:
+        
     # load configuration
     # upgrade refs?
     ## upgrade refs

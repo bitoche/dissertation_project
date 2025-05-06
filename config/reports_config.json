@@ -1,0 +1,401 @@
+{
+    "report_names": [
+        "acc"
+    ],
+    "report_names_all": [
+        "acc",
+        "amt",
+        "pl",
+        "component_analysis",
+        "liab_analysis",
+        "cr",
+        "fin_exp_inc",
+        "currency",
+        "geography",
+        "obltime"
+    ],
+    "entry_features_num": 5,
+    "ref_names":[
+        "ref_sums",
+        "ref_oneros",
+        "ref_entry_names",
+        "ref_expenses_incomes",
+        "ref_cash_flow_groups",
+        "ref_business_line",
+        "ref_fin_periods",
+        "ref_amount_payment",
+        "ref_entry_chart",
+        "ref_metrics_pl",
+        "ref_metrics_amt",
+        "ref_metrics_component_analysis",
+        "ref_metrics_liab_analysis",
+        "ref_metrics_cr",
+        "ref_metrics_fin_exp_inc",
+        "ref_metrics_currency",
+        "ref_metrics_geography",
+        "ref_metrics_obltime",
+        "ref_indicator_type",
+        "ref_insurance_type",
+        "ref_portfolio",
+        "ref_mapaccounts",
+        "ref_category",
+        "ref_exp",
+        "ref_rsrv",
+        "ref_ofr",
+        "ref_pay_npo",
+        "ref_pay_ops",
+        "ref_inv_ops",
+        "ref_inv_pds",
+		"ref_insurance_type_short_npf",
+		"ref_oneros_md"
+    ],
+    "reports": {
+        "general_conf":{
+            "date_columns_set": ["REPORT_DT", "RGRP_INCEPTION_DT"],
+            "values_column": "AMOUNT_AMT",
+            "new_columns": ["AMOUNT_TYPE_CD"]
+        },
+        "amt": {
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_AMT",
+            "report_type_cd": "REP_VA_IFRS17_AMT", 
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "INCEPTION_YEAR",
+                "REPORT_YEAR",
+                "INCEPTION_MONTH",
+                "REPORT_MONTH",
+                "GROUP_ID",
+                "PORTFOLIO_CD"
+            ],
+            "in_cat_cols_not_gr": [
+            ],
+            "cat_cols_out_str":"calc_id, ifrs_approach_cd, group_id, portfolio_cd, cohort_cd",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"
+        },
+        "pl": {
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_PL",
+            "report_type_cd": "REP_VA_IFRS17_PL", 
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "INCEPTION_YEAR",
+                "REPORT_YEAR",
+                "INCEPTION_MONTH",
+                "REPORT_MONTH",
+                "GROUP_ID",
+                "PORTFOLIO_CD"
+            ],
+            "in_cat_cols_not_gr": [
+                "CONTRACT_TYPE"
+            ],
+            "cat_cols_out_str":"calc_id, ifrs_approach_cd, group_id, portfolio_cd, cohort_cd",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"
+        },
+        "acc":{
+            "need_constructor":false,
+            "data_mart": "rep_entry", 
+            "report_type_cd": "REP_ACC_VA_IFRS17",
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "GROUP_ID"
+            ],
+            "in_cat_cols_not_gr": [
+            ],
+            "cat_cols_out_str":"",
+            "create_rep_data_extract_sql": "sub_q_rep_entry_data_mart/&COMP_PARAM/&PROJ_PARAM/create_rep_entry_data_mart.sql",
+            "run_duck_db_script": "Y"
+        },
+        "component_analysis":{
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_COMPONENT_ANALYSIS",
+            "report_type_cd": "REP_VA_IFRS17_COMPONENT_ANALYSIS", 
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "REPORT_YEAR",
+                "INCEPTION_YEAR",
+                "REPORT_MONTH",
+                "INCEPTION_MONTH",
+                "GROUP_ID",
+                "IFRS_APPROACH_CD",
+                "COHORT_CD",
+                "PORTFOLIO_CD"
+            ],
+            "in_cat_cols_not_gr": [
+                "INDICATOR_TYPE"
+            ],
+            "cat_cols_out_str":"calc_id, ifrs_approach_cd, group_id, portfolio_cd, cohort_cd",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"
+        },
+        "liab_analysis": {
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_LIAB_ANALYSIS",
+            "report_type_cd": "REP_VA_IFRS17_LIAB_ANALYSIS", 
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "REPORT_YEAR",
+                "INCEPTION_YEAR",
+                "REPORT_MONTH",
+                "INCEPTION_MONTH",
+                "GROUP_ID",
+                "IFRS_APPROACH_CD",
+                "PORTFOLIO_CD"
+            ],
+            "in_cat_cols_not_gr": [
+                "INDICATOR_TYPE",
+                "LOSS_COMPONENT"
+            ],
+            "cat_cols_out_str":"calc_id, group_id, portfolio_cd, cohort_cd, ifrs_approach_cd",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"
+        },
+        "cr": {
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_CR",
+            "report_type_cd": "REP_VA_IFRS17_CR", 
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "GROUP_ID",
+                "REPORT_YEAR",
+                "INCEPTION_YEAR",
+                "REPORT_MONTH",
+                "INCEPTION_MONTH",
+                "PORTFOLIO_CD"
+            ],
+            "in_cat_cols_not_gr": [
+            ],
+            "cat_cols_out_str":"portfolio_cd, calc_id, group_id, cohort_cd",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"
+        },
+        "fin_exp_inc":{
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_FIN_EXP_INC",
+            "report_type_cd": "REP_VA_IFRS17_FIN_EXP_INC", 
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "GROUP_ID",
+                "IFRS_APPROACH_CD",
+                "PORTFOLIO_CD"
+            ],
+            "in_cat_cols_not_gr": [
+            ],
+            "cat_cols_out_str":"portfolio_cd, calc_id, group_id, cohort_cd, ifrs_approach_cd",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"
+        },
+        "currency":{
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_CURRENCY",
+            "report_type_cd": "REP_VA_IFRS17_CURRENCY", 
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "GROUP_ID",
+                "IFRS_APPROACH_CD",
+                "PORTFOLIO_CD",
+                "CURRENCY_CD"
+            ],
+            "in_cat_cols_not_gr": [
+            ],
+            "cat_cols_out_str":"calc_id, ifrs_approach_cd, group_id, portfolio_cd, cohort_cd, \"CURRENCY_CD\"",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"
+        },
+        "geography":{
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_GEOGRAPHY",
+            "report_type_cd": "REP_VA_IFRS17_GEOGRAPHY", 
+            "source_data_value_file": "result_amounts_gr_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "GROUP_ID",
+                "IFRS_APPROACH_CD",
+                "PORTFOLIO_CD"
+            ],
+            "in_cat_cols_not_gr": [
+                "GEOGRAPHY_CD"
+            ],
+            "cat_cols_out_str":"calc_id, ifrs_approach_cd, group_id, portfolio_cd, cohort_cd",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"
+        },
+        "obltime":{
+            "need_constructor":true,
+            "data_mart": "REP_IFRS17_OBLTIME",
+            "report_type_cd": "REP_VA_IFRS17_OBLTIME", 
+            "source_data_value_file": "prd_grp_source.sql",
+            "initial_categorical_columns": [
+                "CALC_ID",
+                "GROUP_ID",
+                "PORTFOLIO_CD"
+            ],
+            "in_cat_cols_not_gr": [
+            ],
+            "cat_cols_out_str":"calc_id, cohort_cd, group_id, portfolio_cd",
+            "create_rep_data_extract_sql": "create_rep_data_extract.sql",
+            "run_duck_db_script": "N"      
+        }
+    },
+    "references": {
+        "ref_mapaccounts": {
+            "filename": "Карта проводок",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": {"debit_sub_account_cd": "str"
+                ,"credit_sub_account_cd": "str"
+                ,"debit_pl_code_cd": "str"
+                ,"credit_pl_code_cd": "str"
+                ,"debit_account_cd": "str"
+                ,"redit_account_cd": "str"}
+        },
+        "ref_expenses_incomes": {
+            "filename": "Справочник Виды доходов расходов",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": {"drsk_id": "str", "pl_code_cd": "str", "account_number_cd": "str", "pl_type_name": "str"}
+        },
+        "ref_cash_flow_groups": {
+            "filename": "Справочник Группы денежных потоков",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+        "ref_business_line": {
+            "filename": "Справочник Линии бизнеса",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+        "ref_fin_periods": {
+            "filename": "Справочник Финансовые периоды",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+        "ref_amount_payment": {
+            "filename": "Справочник Типы сумм метрики",
+            "header": 0,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+        "ref_entry_chart": {
+            "filename": "Справочник План счетов",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+        "ref_metrics_...": {
+            "filename": "constructor_...",
+            "header": 0,
+            "sheet_name": "Metrics",
+            "dtype": "None"
+        },
+        "ref_indicator_type": {
+            "filename": "ref_indicator_type",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+        "ref_insurance_type": {
+            "filename": "Справочник Виды страхования",
+            "header": 0,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+        "ref_portfolio": {
+            "filename": "Справочник Учетные группы",
+            "header": 0,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+		"ref_sums": {
+            "filename": "ref_sums",
+            "header": 3,
+            "sheet_name": "Лист1",
+            "dtype": "None"		   			   
+        },		 
+		"ref_category": {
+            "filename": "ref_category",
+            "header": 0,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+        "ref_oneros": {
+            "filename": "ref_oneros",
+            "header": 3,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+		"ref_entry_names": {
+            "filename": "ref_entry_names",
+            "header": 3,
+            "sheet_name": "Лист1",
+            "dtype": "None"		   			   
+        },
+        "ref_exp": {
+            "filename": "Справочник ВидыПенсРасхДох",
+            "header": 2,
+            "sheet_name": "ВидыПенсРасхДох",
+            "dtype": {"exp_desc": "str", "exp_cd": "str"}
+        },
+        "ref_rsrv": {
+            "filename": "Справочник ВидыРезервов",
+            "header": 2,
+            "sheet_name": "Лист1",
+            "dtype": {"rsrv_desc": "str", "rsrv_cd": "str"}
+        },
+        "ref_ofr": {
+            "filename": "СтатьиДиР",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": {"id": "str", "number": "str", "ofr_cd": "str", "ofr_desc": "str"}
+        },
+        "ref_pay_npo": {
+            "filename": "ВидыВыплатНПО",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": {"payment_npo_cd": "str"}
+        },
+        "ref_pay_ops": {
+            "filename": "ВидыВыплатОПС",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": {"payment_ops_cd": "str"}
+        },
+        "ref_inv_ops": {
+            "filename": "ВидыВзносовОПС",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": {"inv_ops_cd": "str"}
+        },
+        "ref_inv_pds": {
+            "filename": "ВидыВзносовПДС",
+            "header": 1,
+            "sheet_name": "Лист1",
+            "dtype": {"inv_pds_cd": "str"}
+        },
+        "ref_insurance_type_short_npf": {
+            "filename": "ref_insurance_type_short_npf",
+            "header": 0,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        },
+		"ref_oneros_md": {
+            "filename": "ref_oneros_md",
+            "header": 0,
+            "sheet_name": "Лист1",
+            "dtype": "None"
+        }
+    }
+}

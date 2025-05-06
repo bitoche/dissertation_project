@@ -35,8 +35,7 @@ class DBConfig():
         DB_SCHEMA_SANDBOX=env('DB_SCHEMA_SANDBOX')
     
 class AppConfig():
-    # parameters of api
-    pass
+    PROJ_PARAM = env('PROJ_PARAM')
 
 class LoggingConfig():
     LOG_LEVEL = env('LOGGING_LEVEL', 'INFO')
@@ -46,6 +45,7 @@ class ModuleConfig():
     SCRIPTS_PATH = env('MODULE_SCRIPTS_PATH')
     INPUT_FILES_PATH = env('MODULE_INPUT_FILES_PATH')
     OUTPUT_FILES_PATH = env('MODULE_OUTPUT_FILES_PATH')
+    CONFIGURATION_FILES_PATH = env('MODULE_CONFIGURATION_PATH')
 
 class VERSIONS():
     API = env('API_VERSION', 'v1-auto-assigned')
