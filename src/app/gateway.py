@@ -43,6 +43,7 @@ async def get_status(task_type: str, calc_id: int):
 async def add_report_task(item: StartReportItem):
     task_data = item.model_dump()
     app_log.info(item.model_dump())
-    task = start_reports_task.delay(task_data)
-    return {"status": "recieved", "task_id": task.id}
+    task = start_reports_task(task_data)#.delay(task_data)
+    task_id = -1
+    return {"status": "recieved", "task_id": task_id}
 

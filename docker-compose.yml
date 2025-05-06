@@ -1,25 +1,12 @@
 services:
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
-  celery_worker:
-    build: .
-    command: celery -A src.app.worker_tasks.clr worker --loglevel=info
-    volumes:
-      - ./logs:/app/logs
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - redis
   api:
     build:
       context: .
-    container_name: dissertation_api
+    container_name: diss_api
     ports:
-      - "5000:5000"
+      - "8005:5000"
     env_file:
       - .env
     volumes:
-      # - .:/app
-      - ./logs:/app/logs
+      - .:/app
+      #- ./logs:/app/logs
