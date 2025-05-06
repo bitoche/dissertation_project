@@ -1,9 +1,13 @@
 from ...model.interface import StartReportItem
 from main import get_calc_status, main_func as start_calc
 from . import clr
+import logging
+
+app_logger = logging.getLogger('app')
 
 @clr.task
 def start_reports_task(start_report_item: dict):
+    app_logger.info(f'Recieved task {start_report_item}')
     item = StartReportItem(**start_report_item)
     return start_calc(item.item)
     # return f"not implemented. recieved:{item}"

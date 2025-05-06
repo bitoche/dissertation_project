@@ -5,7 +5,7 @@ services:
       - "6379:6379"
   celery_worker:
     build: .
-    command: celery -A src.tasks.celery worker --loglevel=info
+    command: celery -A src.app.worker_tasks.clr worker --loglevel=info
     volumes:
       - ./logs:/app/logs
     environment:
@@ -13,7 +13,7 @@ services:
     depends_on:
       - redis
   api:
-    build: 
+    build:
       context: .
     container_name: dissertation_api
     ports:
@@ -21,5 +21,5 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
+      # - .:/app
       - ./logs:/app/logs

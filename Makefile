@@ -10,6 +10,7 @@ ACTIVATE := $(VENV_PATH)/bin/activate
 init: venv install activate
 
 activate:
+	chmod ugo+rwx -R $(VENV_PATH)/lib 
 	chmod +x $(ACTIVATE)
 
 venv:
