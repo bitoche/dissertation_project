@@ -20,8 +20,13 @@ install:
 	$(PIP) install --upgrade pip
 	$(PIP) install -r requirements.txt
 
-run:
-	$(PYTHON) -m uvicorn src.app.gateway:app --reload --host 0.0.0.0 --port 5000
+# run:
+# 	$(PYTHON) -m uvicorn src.app.gateway:app --reload --host 0.0.0.0 --port 5000
 
 clean:
 	rm -rf $(VENV_PATH)
+
+clean-cache:
+	@echo "Удаление кеш-папок ..."
+	@sudo find . -type d -name "__pycache__" -exec rm -rf {} +
+	@echo "... успешно."
