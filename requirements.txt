@@ -1,9 +1,7 @@
-uvicorn[standard]
-
-fastapi
-pydantic
-psycopg2-binary
-celery
-redis
-
-python-dotenv==1.1.0
+flask==2.0.1
+flask-sqlalchemy==2.5.1
+flask-migrate==3.1.0
+pandas==1.3.5
+psycopg2-binary==2.9.3
+python-dotenv==0.19.2
+pytest==7.1.2

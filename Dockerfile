@@ -1,23 +1,13 @@
-# import official python image
-FROM python:alpine
+FROM python:3.9-slim
 
-# set up workdir
 WORKDIR /app
-
-# copying requirements
 COPY requirements.txt .
-
-# installing requirements
 RUN pip install --no-cache-dir -r requirements.txt
 
-# copying all code
 COPY . .
 
-# set up environment variables
-###
+ENV PYTHONUNBUFFERED=1
+ENV CONFIG_PATH=/app/config.json
+ENV LOG_FILE=/app/calculator.log
 
-# open outer port
-EXPOSE 5000
-
-# start app
-CMD ["python", "-m", "uvicorn", "src.app.gateway:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["python", "-m", "app"]

@@ -1,0 +1,17 @@
+{
+    "paths": {
+        "input": "/app/data/input",
+        "output": "/app/data/output",
+        "scripts": "/app/scripts"
+    },
+    "database": {
+        "url": "${DATABASE_URL}"
+    },
+    "queries": {
+        "input_data": "SELECT * FROM input_data WHERE date = :data_date"
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "/app/calculator.log"
+    }
+}
