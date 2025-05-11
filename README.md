@@ -31,6 +31,10 @@ CALCULATOR_VERSION=v1-auto-assigned
 ### Создайте директории:
 mkdir -p config input_files/scripts output_files logs
 
+### Настройте права для директории логов: 
+Убедитесь, что директория ./logs доступна для записи:
+`chmod -R 777 ./logs`
+
 ### Запустите приложение:
 docker-compose up --build
 
