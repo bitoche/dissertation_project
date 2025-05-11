@@ -1,4 +1,3 @@
-```python
 from flask import Flask
 from app.utils.logger import setup_logging
 from app.config.config_manager import load_config
@@ -17,4 +16,3 @@ def create_app():
     app.register_blueprint(api_bp, url_prefix='/api')
     
     return app
-```
