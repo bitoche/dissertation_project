@@ -2,8 +2,9 @@
 
 ## Требования
 - Docker и Docker Compose
-- Python 3.9+ (используется внутри Docker-контейнера)
+- Python 3.11+ (используется внутри Docker-контейнера)
 - Доступ к внешней PostgreSQL базе данных (для получения входных данных)
+- Стабильное интернет-соединение для установки зависимостей
 
 ## Установка
 
@@ -13,7 +14,7 @@
    cd <repository_name>
 
 
-Создайте файл .env:Создайте файл .env в корне проекта со следующим содержимым, указав параметры подключения к внешней PostgreSQL базе данных:
+Создайте файл .env:Создайте файл .env в корне проекта с параметрами подключения к внешней PostgreSQL базе данных:
 DB_HOST=your_db_host
 DB_PORT=5432
 DB_NAME=your_db_name
@@ -22,7 +23,7 @@ DB_PASSWORD=your_db_password
 LOG_LEVEL=INFO
 CONFIG_PATH=/app/config.json
 
-Замените your_db_host, your_db_name, your_db_user, your_db_password на реальные значения для вашей базы данных.
+Замените your_db_host, your_db_name, your_db_user, your_db_password на реальные значения.
 
 Создайте файл config.json:Создайте файл config.json в корне проекта. Пример:
 {
@@ -85,10 +86,22 @@ curl http://localhost:5000/api/status/calc_001
 
 Устранение неполадок
 
-Ошибка подключения к базе данных: Проверьте параметры DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD в .env и убедитесь, что внешняя PostgreSQL база доступна.
+Ошибка подключения к базе данных: Проверьте параметры DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD в .env и убедитесь, что внешняя PostgreSQL база доступна (psql -h your_db_host -U your_db_user -d your_db_name).
 API не отвечает: Убедитесь, что порт 5000 свободен и контейнер работает (docker ps).
 Логи не пишутся: Проверьте путь log_file в config.json и права доступа к папке ./logs.
-Выходные файлы не создаются: Убедитесь, что входные данные есть в ./data/input и приложение их обрабатывает.
+Выходные файлы не создаются: Убедитесь, что входные данные есть в ./data/input.
+Ошибка сборки из-за psycopg2: Если возникает ошибка pg_config executable not found:
+Убедитесь, что Dockerfile включает установку libpq-dev и gcc.
+Очистите кэш Docker: docker builder prune.
+Попробуйте пересобрать: docker-compose up --build.
+
+
+Ошибка SSL при установке зависимостей: Если возникает SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC:
+Проверьте интернет-соединение (отключите VPN/прокси).
+Очистите кэш Docker: docker builder prune.
+Обновите Docker и Docker Compose до последних версий.
+
+
 
 
 
