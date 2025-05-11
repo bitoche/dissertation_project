@@ -1,9 +1,8 @@
 import pandas as pd
 import os
 import json
+import psycopg2
 from app.config.config_manager import load_config
-from app.models.calculation_result import CalculationResult
-from app import db
 import logging
 
 logger = logging.getLogger('financial_calculator')
@@ -13,13 +12,27 @@ class IFRS17Calculator:
         self.config = load_config()
         self.input_path = self.config['paths']['input']
         self.output_path = self.config['paths']['output']
+        self.db_config = self.config['db_connection']
     
     def load_data(self, calculation_id, data_date):
-        """Загрузка входных данных из БД"""
+        """Загрузка входных данных из внешней БД"""
         logger.info(f"Loading data for calculation {calculation_id}")
         query = self.config['queries']['input_data']
-        data = pd.read_sql(query, db.engine, params={'data_date': data_date})
-        return data
+        
+        try:
+            conn = psycopg2.connect(
+                host=self.db_config['host'],
+                port=self.db_config['port'],
+                database=self.db_config['database'],
+                user=self.db_config['user'],
+                password=self.db_config['password']
+            )
+            data = pd.read_sql(query, conn, params={'data_date': data_date})
+            conn.close()
+            return data
+        except Exception as e:
+            logger.error(f"Failed to load data: {str(e)}")
+            raise
     
     def calculate_indicators(self, data, calc_config):
         """Расчет финансовых показателей МСФО 17"""
@@ -37,12 +50,12 @@ class IFRS17Calculator:
             logger.error(f"Indicator calculation failed: {str(e)}")
             raise
     
-    def build_showcase(self, indicators, showcase_config):
+    def build_showcase(self, indicators, calc_config, calculation_id):
         """Формирование витрины данных"""
         logger.info("Building data showcase")
         try:
             showcase = indicators.reset_index()
-            output_file = os.path.join(self.output_path, f"showcase_{showcase_config['id']}.csv")
+            output_file = os.path.join(self.output_path, f"showcase_{calculation_id}.csv")
             showcase.to_csv(output_file, index=False)
             return output_file
         except Exception as e:
@@ -61,22 +74,22 @@ class IFRS17Calculator:
                 calc_config = json.load(f)
             
             indicators = self.calculate_indicators(data, calc_config)
-            showcase = self.build_showcase(indicators, calc_config)
+            showcase = self.build_showcase(indicators, calc_config, calc_params['calculation_id'])
             
-            # Сохранение результата
-            result = CalculationResult(
-                calculation_id=calc_params['calculation_id'],
-                report_date=calc_params['report_date'],
-                data={'showcase_path': showcase},
-                status='SUCCESS'
-            )
-            db.session.add(result)
-            db.session.commit()
+            # Сохранение статуса в JSON
+            status_file = os.path.join(self.output_path, f"status_{calc_params['calculation_id']}.json")
+            status_data = {
+                'calculation_id': calc_params['calculation_id'],
+                'report_date': calc_params['report_date'],
+                'status': 'SUCCESS',
+                'showcase_path': showcase
+            }
+            with open(status_file, 'w') as f:
+                json.dump(status_data, f)
             
             logger.info(f"Calculation {calc_params['calculation_id']} completed")
             return {'status': 'SUCCESS', 'showcase': showcase}
             
         except Exception as e:
-            db.session.rollback()
             logger.error(f"Calculation failed: {str(e)}")
             return {'status': 'ERROR', 'error': str(e)}

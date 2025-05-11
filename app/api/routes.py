@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app.calculator.ifrs17_calculator import IFRS17Calculator
-from app.models.calculation_result import CalculationResult
-from app import db
 import logging
+import os
+import json
 
 api_bp = Blueprint('api', __name__)
 logger = logging.getLogger('financial_calculator')
@@ -26,9 +26,14 @@ def calculate():
 
 @api_bp.route('/status/<calculation_id>', methods=['GET'])
 def check_status(calculation_id):
-    result = CalculationResult.query.filter_by(calculation_id=calculation_id).first()
-    if result:
-        logger.info(f"Status check for calculation {calculation_id}: {result.status}")
-        return jsonify({'calculation_id': calculation_id, 'status': result.status})
+    config = load_config()
+    status_file = os.path.join(config['paths']['output'], f"status_{calculation_id}.json")
+    
+    if os.path.exists(status_file):
+        with open(status_file, 'r') as f:
+            status_data = json.load(f)
+        logger.info(f"Status check for calculation {calculation_id}: {status_data['status']}")
+        return jsonify({'calculation_id': calculation_id, 'status': status_data['status']})
+    
     logger.warning(f"Calculation {calculation_id} not found")
     return jsonify({'status': 'NOT_FOUND'}), 404

@@ -1,6 +1,6 @@
-flask
-psycopg2-binary
-pandas
-numpy
-python-dotenv
-pytest
+flask==2.0.1
+psycopg2-binary==2.9.3
+pandas==1.4.3
+numpy==1.22.4
+python-dotenv==0.20.0
+pytest==7.1.2
