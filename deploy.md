@@ -1,45 +1,94 @@
-Инструкция по развертыванию
-Требования
+# Инструкция по развертыванию
 
-Docker
-PostgreSQL
-Python 3.9+
+## Требования
+- Docker и Docker Compose
+- Python 3.9+ (используется внутри Docker-контейнера)
+- Доступ к внешней PostgreSQL базе данных (для получения входных данных)
 
-Установка
+## Установка
 
-Склонируйте репозиторий:
+1. **Склонируйте репозиторий**:
+   ```bash
+   git clone <repository_url>
+   cd <repository_name>
 
-git clone <repository_url>
-cd <repository_name>
 
-
-Создайте файл .env:
-
-DATABASE_URL=postgresql://user:password@host:port/dbname
+Создайте файл .env:Создайте файл .env в корне проекта со следующим содержимым, указав параметры подключения к внешней PostgreSQL базе данных:
+DB_HOST=your_db_host
+DB_PORT=5432
+DB_NAME=your_db_name
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
 LOG_LEVEL=INFO
-CONFIG_PATH=config.json
+CONFIG_PATH=/app/config.json
+
+Замените your_db_host, your_db_name, your_db_user, your_db_password на реальные значения для вашей базы данных.
+
+Создайте файл config.json:Создайте файл config.json в корне проекта. Пример:
+{
+  "input_dir": "/app/data/input",
+  "output_dir": "/app/data/output",
+  "scripts_dir": "/app/scripts",
+  "log_level": "INFO",
+  "log_file": "/app/logs/calculator.log",
+  "db_connection": {
+    "host": "${DB_HOST}",
+    "port": "${DB_PORT}",
+    "database": "${DB_NAME}",
+    "user": "${DB_USER}",
+    "password": "${DB_PASSWORD}"
+  },
+  "calculation_config": {
+    "report_date": "2023-12-31",
+    "prev_report_date": "2023-11-30",
+    "data_date": "2023-12-31",
+    "calc_type": "IFRS17",
+    "calculation_id": "calc_001"
+  }
+}
 
 
-Соберите и запустите Docker-контейнер:
-
-docker build -t financial-calculator .
-docker run -d -p 5000:5000 --env-file .env financial-calculator
+Создайте папки для данных и логов:
+mkdir -p data/input data/output logs
 
 
-Выполните миграции базы данных:
+Запустите приложение с помощью Docker Compose:
+docker-compose up --build
 
-docker exec <container_name> flask db upgrade
+
+Флаг --build пересобирает образ при изменениях.
+Для фонового режима: docker-compose up -d.
+
+Это запустит Flask-приложение на http://localhost:5000.
+
+Проверка логов:Логи приложения сохраняются в ./logs/calculator.log. Просмотрите их:
+cat logs/calculator.log
+
+
+Остановка сервиса:
+docker-compose down
+
+
 
 Использование API
 
 Запуск расчета:
-
 curl -X POST http://localhost:5000/api/calculate \
--H "Content-Type: application/json" \
--d '{"report_date": "2023-12-31", "prev_report_date": "2023-11-30", "data_date": "2023-12-31", "calc_type": "IFRS17", "calculation_id": "calc_001"}'
+  -H "Content-Type: application/json" \
+  -d '{"report_date": "2023-12-31", "prev_report_date": "2023-11-30", "data_date": "2023-12-31", "calc_type": "IFRS17", "calculation_id": "calc_001"}'
 
 
 Проверка статуса:
-
 curl http://localhost:5000/api/status/calc_001
+
+
+
+Устранение неполадок
+
+Ошибка подключения к базе данных: Проверьте параметры DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD в .env и убедитесь, что внешняя PostgreSQL база доступна.
+API не отвечает: Убедитесь, что порт 5000 свободен и контейнер работает (docker ps).
+Логи не пишутся: Проверьте путь log_file в config.json и права доступа к папке ./logs.
+Выходные файлы не создаются: Убедитесь, что входные данные есть в ./data/input и приложение их обрабатывает.
+
+
 

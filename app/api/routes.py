@@ -10,9 +10,9 @@ logger = logging.getLogger('financial_calculator')
 @api_bp.route('/calculate', methods=['POST'])
 def calculate():
     params = request.json
-    required = ['report_date', 'prev_report_date', 'data_date', 'calc_type', 'calculation_id']
+    required_params = ['report_date', 'prev_report_date', 'data_date', 'calc_type', 'calculation_id']
     
-    if not all(param in params for param in required):
+    if not all(param in params for param in required_params):
         logger.error("Missing required parameters")
         return jsonify({'status': 'ERROR', 'message': 'Missing required parameters'}), 400
     

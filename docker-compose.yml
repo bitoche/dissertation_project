@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - LOG_LEVEL=INFO
+      - CONFIG_PATH=/app/config.json
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./config.json:/app/config.json
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - ifrs17-network
+    command: python -m app
+
+networks:
+  ifrs17-network:
+    driver: bridge
