@@ -2,10 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Устанавливаем зависимости для psycopg2-binary
+# Устанавливаем зависимости для psycopg2-binary и pandas
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
+    g++ \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -15,10 +17,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # Очищаем временные зависимости
-RUN apt-get purge -y --auto-remove gcc
+RUN apt-get purge -y --auto-remove gcc g++ python3-dev
 
 ENV PYTHONUNBUFFERED=1
 ENV CONFIG_PATH=/app/config.json
 ENV LOG_FILE=/app/logs/calculator.log
 
-CMD ["python", "-m", "app"]
+CMD ["python", "run.py"]

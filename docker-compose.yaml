@@ -20,7 +20,7 @@ services:
       - ./logs:/app/logs
     networks:
       - ifrs17-network
-    command: python -m app
+    command: python run.py
 
 networks:
   ifrs17-network:

@@ -49,8 +49,12 @@ CONFIG_PATH=/app/config.json
 }
 
 
-Создайте папки для данных и логов:
+Создайте папки для данных, логов и скриптов:
 mkdir -p data/input data/output logs scripts
+
+
+Создайте пример конфигурации расчета:
+echo '{"id": "IFRS17"}' > scripts/IFRS17.json
 
 
 Запустите приложение с помощью Docker Compose:
@@ -89,14 +93,11 @@ curl http://localhost:5000/api/status/calc_001
 Ошибка подключения к базе данных: Проверьте параметры DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD в .env и убедитесь, что внешняя PostgreSQL база доступна (psql -h your_db_host -U your_db_user -d your_db_name).
 API не отвечает: Убедитесь, что порт 5000 свободен и контейнер работает (docker ps).
 Логи не пишутся: Проверьте путь logging.file в config.json и права доступа к папке ./logs.
-Выходные файлы не создаются: Убедитесь, что входные данные есть в ./data/input и скрипт расчета в ./scripts/<calc_type>.json.
+Выходные файлы не создаются: Убедитесь, что входные данные есть в ./data/input и скрипт расчета в ./scripts/IFRS17.json.
 Ошибка сборки из-за psycopg2: Если возникает ошибка pg_config executable not found:
-Убедитесь, что Dockerfile включает установку libpq-dev и gcc.
+Убедитесь, что Dockerfile включает установку libpq-dev.
 Очистите кэш Docker: docker builder prune.
 Попробуйте пересобрать: docker-compose up --build.
 
 
-Ошибка ModuleNotFoundError: Проверьте, что все зависимости указаны в requirements.txt и установлены.
-
-
-
+Ошибка запуска No module named app.__main__: Убедитесь, что Dockerfile и docker-compose.yaml используют CMD ["python", "run.py"] и command: python run.py.

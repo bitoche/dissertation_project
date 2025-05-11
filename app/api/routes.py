@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.calculator.ifrs17_calculator import IFRS17Calculator
+from app.config.config_manager import load_config
 import logging
 import os
 import json
@@ -9,6 +10,55 @@ logger = logging.getLogger('financial_calculator')
 
 @api_bp.route('/calculate', methods=['POST'])
 def calculate():
+    """
+    Run IFRS17 calculation
+    ---
+    tags:
+      - Calculation
+    parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          required:
+            - report_date
+            - prev_report_date
+            - data_date
+            - calc_type
+            - calculation_id
+          properties:
+            report_date:
+              type: string
+              example: "2023-12-31"
+            prev_report_date:
+              type: string
+              example: "2023-11-30"
+            data_date:
+              type: string
+              example: "2023-12-31"
+            calc_type:
+              type: string
+              example: "IFRS17"
+            calculation_id:
+              type: string
+              example: "calc_001"
+    responses:
+      200:
+        description: Calculation successful
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "SUCCESS"
+            showcase:
+              type: string
+              example: "/app/data/output/showcase_calc_001.csv"
+      400:
+        description: Missing required parameters
+      500:
+        description: Calculation failed
+    """
     params = request.json
     required_params = ['report_date', 'prev_report_date', 'data_date', 'calc_type', 'calculation_id']
     
