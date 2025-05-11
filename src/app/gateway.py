@@ -1,46 +1,37 @@
 from fastapi import FastAPI
 from config.config import VERSIONS
-from src.model.interface import StartReportItem
-from .worker_tasks.tasks import *
-from ..db_connection import check_connection_status as check_db_connection_status
+from src.model.interface import GeneralInfo
+from src.main import start_calc, get_calc_status
+from src.db_connection import check_connection_status
 import logging
+
 app_log = logging.getLogger('app')
 
-app = FastAPI(title="Reports Service API", 
+app = FastAPI(title="IFRS17 Reports Service API",
               version=VERSIONS.API,
               root_path="/python/api")
 
 _CALC = ['Calculation functions']
 _API = ['API']
 
-app_log.info(f'---------------------- Started Application! ----------------------')
+app_log.info('---------------------- Started Application! ----------------------')
 
-
-@app.get(f"/health", tags=_API)
+@app.get("/health", tags=_API)
 def health_check():
     statuses = {
-        "db_connection_status": check_db_connection_status(),
+        "db_connection_status": check_connection_status(),
         "calculator_status": "ok"
     }
-    check_result = "good"
-    for k,v in statuses.items():
-        if v!="ok":
-            check_result = "bad"
-        
+    check_result = "good" if all(v == "ok" for v in statuses.values()) else "bad"
     return {"check_result": check_result, "modules_statuses": statuses}
 
-@app.get("/getStatus/{task_type}/{calc_id}", tags=_API)
-async def get_status(task_type: str, calc_id: int):
-    match task_type:
-        case 'reports_task':
-            return check_reports_task_status(calc_id)
-    return {"status": "error"}
+@app.get("/getStatus/{calc_id}", tags=_API)
+async def get_status(calc_id: int):
+    status = get_calc_status(calc_id)
+    return status
 
 @app.post(f"/{VERSIONS.CALCULATOR}/startCalc", tags=_CALC)
-async def add_report_task(item: StartReportItem):
-    task_data = item.model_dump()
-    app_log.info(item.model_dump())
-    task = start_reports_task(task_data)#.delay(task_data)
-    task_id = -1
-    return {"status": "recieved", "task_id": task_id}
-
+async def start_calculation(item: GeneralInfo):
+    app_log.info(f"Received calculation request: {item.model_dump()}")
+    result = start_calc(item)
+    return result

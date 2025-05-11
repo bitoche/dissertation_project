@@ -1,23 +1,21 @@
-# import official python image
-FROM python:alpine
+FROM python:3.11-slim
 
-# set up workdir
 WORKDIR /app
 
-# copying requirements
+# Устанавливаем зависимости для psycopg2-binary
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# installing requirements
-RUN pip install --no-cache-dir -r requirements.txt
-
-# copying all code
 COPY . .
 
-# set up environment variables
-###
+ENV PYTHONUNBUFFERED=1
+ENV LOGS_PATH=/app/logs
 
-# open outer port
 EXPOSE 5000
 
-# start app
 CMD ["python", "-m", "uvicorn", "src.app.gateway:app", "--host", "0.0.0.0", "--port", "5000"]

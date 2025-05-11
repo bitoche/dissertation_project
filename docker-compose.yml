@@ -2,11 +2,20 @@ services:
   api:
     build:
       context: .
+      dockerfile: Dockerfile
     container_name: diss_api
     ports:
       - "5000:5000"
     env_file:
       - .env
     volumes:
-      - .:/app
-      #- ./logs:/app/logs
+      - ./config:/app/config
+      - ./input_files:/app/input_files
+      - ./logs:/app/logs
+      - ./output_files:/app/output_files
+    networks:
+      - ifrs17-network
+
+networks:
+  ifrs17-network:
+    driver: bridge

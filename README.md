@@ -1,31 +1,81 @@
-## ***Структура проекта***
+# IFRS17 Reports Service
 
-## ***Запуск проекта***
-### Запуск без **DOCKER**
-#### Подготовка
-- `sudo apt install make` -- установить make
-- `sudo apt install python3 python3-venv` -- установить python3 и venv
-- `sudo usermod -aG docker $USER`, `newgrp docker` -- дать права запуска `docker` без sudo
----
-1. `sudo make init` -- cоздать окружение
-2. `source .venv/bin/activate` -- активировать окружение в терминале
-3. `sudo make run` -- устанавливает зависимости и запускает проект
-#### Остановка и удаление
-- `ctrl+c` в терминале -- остановка приложения
-- `sudo make clean` -- удаляет окружение
----
-### Запуск в **DOCKER** 
-1. `sudo docker compose build` в корне проекта -- подготовка контейнера (создание, подготовка зависимостей)
-2. `sudo docker compose up -d` в корне проекта (запуск контейнера)
-#### Остановка и удаление
-- `sudo docker compose restart` (перезапуск контейнера (при изменениях в коде))
-- `sudo docker compose down` (остановка и удаление контейнера)
+API-сервис для выполнения расчетов IFRS17 отчетов. Подключается к внешней PostgreSQL базе данных и предоставляет эндпоинты для запуска расчетов, получения статуса и проверки состояния.
 
-## Используемые названия переменных
-- даты - `_date`
-- подструктуры - `_script`
-- флаги - `_flag`
-### Обозначения переменных в скриптах
-- `&...` - Переменная-значение (строковое)
-- `$..._flag` - Переменная-флаг (при true/false принимает строковое значение ''/'--' соответственно)
-- `#..._script` - Переменная-структура (строковое представление sql-скрипта, в котором могут быть другие переменные)
+## Требования
+- Docker и Docker Compose
+- Доступ к внешней PostgreSQL базе данных
+- Стабильное интернет-соединение для установки зависимостей
+
+## Установка
+
+1. **Склонируйте репозиторий**:
+   ```bash
+   git clone <repository_url>
+   cd <repository_name>
+
+### Создайте файл .env:
+Создайте файл .env в корне проекта с параметрами:
+DB_HOST=your_db_host
+DB_PORT=5432
+DB_USER=your_db_user
+DB_PASS=your_db_password
+DB_NAME=your_db_name
+PROJ_PARAM=demo1
+LOGGING_LEVEL=INFO
+LOGS_PATH=/app/logs
+MODULE_CONFIGURATION_PATH=/app/config
+API_VERSION=v1-auto-assigned
+CALCULATOR_VERSION=v1-auto-assigned
+
+### Создайте директории:
+mkdir -p config input_files/scripts output_files logs
+
+### Запустите приложение:
+docker-compose up --build
+
+### Для фонового режима: 
+docker-compose up -d.
+API будет доступно на http://localhost:5000.
+
+### Проверьте логи:
+cat logs/reports.log
+cat logs/reports_api.log
+или
+tail -f logs/reports.log
+tail -f logs/reports_api.log
+
+### Остановка сервиса:
+docker-compose down
+
+## Использование API
+
+### Health-проверка:
+`curl http://localhost:5000/health`
+
+### Запуск расчета:
+`curl -X POST http://localhost:5000/v1-auto-assigned/startCalc \
+  -H "Content-Type: application/json" \
+  -d '{"calc_id": 111, "report_date": "2023-12-31", "prev_report_date": "2023-11-30", "actual_date": "2023-12-31"}'`
+
+### Проверка статуса:
+`curl http://localhost:5000/getStatus/111`
+
+## Swagger UI
+Документация API доступна по адресу:
+http://localhost:5000/docs
+
+## Устранение неполадок
+
+### Ошибка подключения к БД:
+Проверьте параметры в .env и доступность PostgreSQL:psql -h your_db_host -U your_db_user -d your_db_name
+
+### API не отвечает:
+Проверьте, что порт 5000 свободен:docker ps
+
+### Логи пустые:
+Проверьте права доступа к ./logs и LOGS_PATH в .env.
+
+### Ошибка сборки:
+Очистите кэш Docker:docker builder prune
+docker-compose up --build
