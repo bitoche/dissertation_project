@@ -34,6 +34,7 @@ mkdir -p config input_files/scripts output_files logs
 ### Настройте права для директории логов: 
 Убедитесь, что директория ./logs доступна для записи:
 `chmod -R 777 ./logs`
+`sudo chown -R $(whoami):$(whoami) ./logs`
 
 ### Запустите приложение:
 docker-compose up --build

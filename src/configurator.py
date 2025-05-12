@@ -11,6 +11,7 @@ def read_configuration_file(proj_param:str):
         {'<proj>': proj_param}
     )
     configuration_file_path = Path(ModuleConfig.CONFIGURATION_FILES_PATH, configuration_filename)
+    logger.info(f'Started read configuration file {configuration_file_path}')
     configuration_file_data = {}
     try:
         with open(configuration_file_path, 'r') as f:

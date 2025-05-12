@@ -1,11 +1,18 @@
 from fastapi import FastAPI
 from config.config import VERSIONS
+from config.log_config import setup_logging
 from src.model.interface import GeneralInfo
 from src.main import start_calc, get_calc_status
 from src.db_connection import check_connection_status
 import logging
 
+setup_logging()
+
+print("Starting gateway.py module import")  # Отладочное сообщение
+
+
 app_log = logging.getLogger('app')
+app_log.info('---------------------- Gateway module loaded ----------------------')
 
 app = FastAPI(title="IFRS17 Reports Service API",
               version=VERSIONS.API,

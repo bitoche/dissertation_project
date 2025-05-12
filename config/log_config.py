@@ -1,88 +1,80 @@
 import logging
-import logging.config
-from os.path import join as join_path
+import sys
 from os import makedirs
+from os.path import join as join_path
 from .config import LoggingConfig
 
+# Основные настройки
 LOG_LEVEL = LoggingConfig.LOG_LEVEL
 LOGS_PATH = LoggingConfig.LOGS_PATH
 LOG_FILE = join_path(LOGS_PATH, 'reports.log')
-API_LOG_FILE = join_path(LOGS_PATH, 'reports_api.log')
 
-# Проверяем и создаем директорию для логов
+# Создаем директорию для логов
 try:
     makedirs(LOGS_PATH, exist_ok=True)
-    logging.debug(f"Log directory created or exists: {LOGS_PATH}")
+    print(f"Log directory created or exists: {LOGS_PATH}")
 except Exception as e:
-    logging.error(f"Failed to create log directory {LOGS_PATH}: {e}")
-    # Fallback: выводим логи только в консоль
-    LOGS_PATH = None
+    print(f"Failed to create log directory {LOGS_PATH}: {e}")
+    # Если не можем создать директорию, продолжаем без файла, логи пойдут в консоль
 
+# Настройка логирования
 def setup_logging():
-    handlers = {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'console',
-        }
-    }
-    
-    if LOGS_PATH:
-        handlers.update({
-            'api_file': {
-                'filename': API_LOG_FILE,
-                'class': 'logging.FileHandler',
-                'formatter': 'time_level_name',
-                'mode': 'a',
-            },
-            'file': {
-                'filename': LOG_FILE,
-                'class': 'logging.FileHandler',
-                'formatter': 'time_level_name',
-                'mode': 'a',
-            }
-        })
-    
-    logging_config = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'time_level_name': {
-                'format': '[ %(asctime)-10s | %(levelname)-8s | %(name)-10s ] %(message)s',
-            },
-            'console': {
-                'format': '%(asctime)s | %(message)s'
-            }
-        },
-        'handlers': handlers,
-        'loggers': {
-            'app': {
-                'handlers': ['file'] if LOGS_PATH else ['console'],
-                'level': LOG_LEVEL,
-                'propagate': False,
-            },
-            'uvicorn': {
-                'handlers': ['console', 'api_file'] if LOGS_PATH else ['console'],
-                'level': 'INFO',
-                'propagate': False,
-            },
-            'fastapi': {
-                'handlers': ['console', 'api_file'] if LOGS_PATH else ['console'],
-                'level': 'INFO',
-                'propagate': False,
-            },
-        },
-        'root': {
-            'handlers': ['console', 'file'] if LOGS_PATH else ['console'],
-            'level': 'WARNING',
-        }
-    }
-    
+    # Форматтеры
+    console_formatter = logging.Formatter('%(asctime)s | %(message)s')
+    file_formatter = logging.Formatter('[ %(asctime)-10s | %(levelname)-8s | %(name)-10s ] %(message)s')
+
+    # Обработчик для консоли
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(console_formatter)
+    console_handler.setLevel('INFO')
+
+    # Обработчик для файла
+    file_handler = None
     try:
-        logging.config.dictConfig(logging_config)
-        logging.info(f'Set log output to file "{LOG_FILE}" with level "{LOG_LEVEL}"')
+        file_handler = logging.FileHandler(LOG_FILE, mode='a')
+        file_handler.setFormatter(file_formatter)
+        file_handler.setLevel('INFO')
+        print(f"Successfully set up file handler for {LOG_FILE}")
     except Exception as e:
-        logging.error(f"Failed to configure logging: {e}")
-        # Fallback: минимальная конфигурация только с консолью
-        logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s | %(message)s')
+        print(f"Failed to set up file handler for {LOG_FILE}: {e}")
+
+    # Настройка логгеров
+    # Логгер для app
+    app_logger = logging.getLogger('app')
+    app_logger.setLevel(LOG_LEVEL)
+    app_logger.handlers.clear()  # Очищаем существующие обработчики
+    if file_handler:
+        app_logger.addHandler(file_handler)
+    else:
+        app_logger.addHandler(console_handler)
+    app_logger.propagate = False
+
+    # Логгер для uvicorn
+    uvicorn_logger = logging.getLogger('uvicorn')
+    uvicorn_logger.setLevel('INFO')
+    uvicorn_logger.handlers.clear()
+    uvicorn_logger.addHandler(console_handler)
+    uvicorn_logger.propagate = False
+
+    # Логгер для fastapi
+    fastapi_logger = logging.getLogger('fastapi')
+    fastapi_logger.setLevel('INFO')
+    fastapi_logger.handlers.clear()
+    fastapi_logger.addHandler(console_handler)
+    fastapi_logger.propagate = False
+
+    # Корневой логгер
+    root_logger = logging.getLogger()
+    root_logger.setLevel('WARNING')
+    root_logger.handlers.clear()
+    root_logger.addHandler(console_handler)
+    if file_handler:
+        root_logger.addHandler(file_handler)
+
+    # Тестовые сообщения
+    app_logger.info("Logging setup completed for app logger")
+    uvicorn_logger.info("Logging setup completed for uvicorn logger")
+    fastapi_logger.info("Logging setup completed for fastapi logger")
+    print("Logging configuration completed")
 
 setup_logging()

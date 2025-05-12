@@ -27,7 +27,7 @@ class AppConfig:
 
 class LoggingConfig:
     LOG_LEVEL = env('LOGGING_LEVEL', 'INFO')
-    LOGS_PATH = env('LOGS_PATH', '/logs')
+    LOGS_PATH = env('LOGS_PATH', '/app/logs')
 
 class ModuleConfig:
     CONFIGURATION_FILES_PATH = env('MODULE_CONFIGURATION_PATH')
