@@ -49,19 +49,37 @@ def start_calc(item: GeneralInfo):
         _status._upd(None, "error", "db connection does not exists", calc_id)
         return _status.get_dict_status()
 
-    try:
-        reports_config_data = read_configuration_file(AppConfig.PROJ_PARAM)
-        reports_config = ReportsConfigurationModel(reports_config_data)
-        activated_reports = reports_config.activated_reports
 
-        mf_log.info(f"Activated reports: {activated_reports}")
-        # Здесь должна быть логика обработки отчетов (пока заглушка)
-        _status._upd(100, "successful", "completed", calc_id)
-        return _status.get_dict_status()
-    except Exception as e:
-        mf_log.error(f"Calculation failed: {str(e)}")
-        _status._upd(None, "error", str(e), calc_id)
-        return _status.get_dict_status()
+    reports_config_data = read_configuration_file(AppConfig.PROJ_PARAM)
+    reports_config = ReportsConfigurationModel(reports_config_data)
+    activated_reports = reports_config.activated_reports
+    refs_configuration = reports_config.refs
+    
+    mf_log.info(f"Activated reports: {activated_reports}")
+        
+    # load configuration
+    #
+    #
+
+    # update refs if needed
+    # if needed update 
+    all_ref_names = [ref_name for ref_name,ref_config in refs_configuration.items()]
+    percents_by_load_all_refs = 30
+    percents_per_ref = (percents_by_load_all_refs - _status.percent) // len(all_ref_names) 
+    for ref in all_ref_names:
+        _status._upd(_status.percent + percents_per_ref, "in progress", f"processing load ref {ref}", calc_id)
+        mf_log.info(f'Started update ref {ref}')
+    
+    percents_remain = 100 - _status.percent
+    percents_per_rep = (percents_remain) // len(activated_reports)
+    for rep in activated_reports:
+        _status._upd(_status.percent + percents_per_rep, "in progress", f"processing report {rep}", calc_id)
+        mf_log.info(f'Started report {ref}')
+    _status._upd(100, "successful", "completed", calc_id)
+    # except Exception as e:
+    #     mf_log.error(f"Calculation failed: {str(e)}")
+    #     _status._upd(None, "error", str(e), calc_id)
+    return _status.get_dict_status()
 
 def get_calc_status(calc_id: int):
     try:
