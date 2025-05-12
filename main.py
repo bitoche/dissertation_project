@@ -59,17 +59,26 @@ def main_func(item: GeneralInfo):
     activated_reports = reports_config.activated_reports
     refs_configuration = reports_config.refs
 
-    all_ref_names = [ref_name for ref_name,ref_config in refs_configuration.items()]
-    for ref in all_ref_names:
-        
     # load configuration
-    # upgrade refs?
-    ## upgrade refs
-    # for active report in config
-    ## actions
+    #
+    #
+
+    # update refs if needed
+    # if needed update 
+    all_ref_names = [ref_name for ref_name,ref_config in refs_configuration.items()]
+    percents_by_load_all_refs = 30
+    percents_per_ref = (percents_by_load_all_refs - _status.percent) // len(all_ref_names) 
+    for ref in all_ref_names:
+        _status._upd(_status.percent + percents_per_ref, "in progress", f"processing load ref {ref}", calc_id)
+        mf_log.info(f'Started update ref {ref}')
+    
+    percents_remain = 100 - _status.percent
+    percents_per_rep = (percents_remain) // len(activated_reports)
+    for rep in activated_reports:
+        _status._upd(_status.percent + percents_per_rep, "in progress", f"processing report {rep}", calc_id)
+        mf_log.info(f'Started report {ref}')
 
     _status._upd(100, "successful", "completed", calc_id)
-
     return _status.get_dict_status()
 
 def get_calc_status(calc_id:int):
