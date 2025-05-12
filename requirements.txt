@@ -1,9 +1,5 @@
-uvicorn[standard]
-
-fastapi
-pydantic
-psycopg2-binary
-celery
-redis
-
-python-dotenv==1.1.0
+fastapi==0.115.4
+uvicorn[standard]==0.32.0
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+pydantic==2.9.2

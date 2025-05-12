@@ -1,5 +1,5 @@
 import json
-from handlers import replace_all
+from src.handlers import replace_all
 from pathlib import Path
 from config.config import ModuleConfig
 import logging
