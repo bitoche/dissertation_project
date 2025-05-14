@@ -41,13 +41,17 @@ def setup_logging():
     # Настройка логгеров
     # Логгер для app
     app_logger = logging.getLogger('app')
-    app_logger.setLevel(LOG_LEVEL)
-    app_logger.handlers.clear()  # Очищаем существующие обработчики
-    if file_handler:
-        app_logger.addHandler(file_handler)
-    else:
-        app_logger.addHandler(console_handler)
-    app_logger.propagate = False
+    serv_logger = logging.getLogger('serv')
+    loggers = [app_logger,
+               serv_logger]
+    for l in loggers:
+        l.setLevel(LOG_LEVEL)
+        l.handlers.clear()
+        if file_handler:
+            l.addHandler(file_handler)
+        else:
+            l.addHandler(console_handler)
+        l.propagate = False
 
     # Логгер для uvicorn
     uvicorn_logger = logging.getLogger('uvicorn')
@@ -65,7 +69,7 @@ def setup_logging():
 
     # Корневой логгер
     root_logger = logging.getLogger()
-    root_logger.setLevel('WARNING')
+    root_logger.setLevel('INFO')
     root_logger.handlers.clear()
     root_logger.addHandler(console_handler)
     if file_handler:

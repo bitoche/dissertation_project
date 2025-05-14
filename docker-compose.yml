@@ -10,9 +10,10 @@ services:
       - .env
     volumes:
       - ./config:/app/config
-      - ./input_files:/app/input_files
-      - ./logs:/app/logs
-      - ./output_files:/app/output_files
+      - ./input_files:/app/input_files # изменения в исходных файлах применяются после restart-а без пересборки
+      - ./logs:/app/logs # логирование в реальном времени записывается в файл в проекте
+      - ./output_files:/app/output_files # модуль может записывать выходные файлы в директорию проекта а не только контейнера
+      - ./src:/app/src # изменения исходного кода применяются сразу после restart-а без сборки
     networks:
       - ifrs17-network
 

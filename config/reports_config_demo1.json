@@ -1,4 +1,8 @@
 {
+    "general": {
+        "auto_update_refs": true,
+        "dump_mart_to_file":true
+    },
     "activated_reports": [
         "amt"
     ],
@@ -101,15 +105,27 @@
     "refs": {
         "ref_group_attrs": {
             "filename": "Справочник атрибутов групп договоров.xlsx",
-            "header": 1
+            "header": 1,
+            "cd_col": "gr_attr_cd",
+            "name_col": "gr_attr_name"
         },
         "ref_product": {
             "filename": "Справочник наименований продуктов.xlsx",
-            "header": 1
+            "header": 1,
+            "cd_col": "product_cd",
+            "name_col": "product_name"
         },
         "ref_onerous_type": {
             "filename": "Справочник типов обременительности.xlsx",
-            "header": 1
+            "header": 1,
+            "cd_col": "onerous_type_cd",
+            "name_col": "onerous_type_name"
+        },
+        "ref_report_items": {
+            "filename": "Справочник отчетных показателей.xlsx",
+            "header": 1,
+            "cd_col": "amount_type_cd",
+            "name_col": "report_item_name"
         }
     }
 }

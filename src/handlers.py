@@ -1,17 +1,13 @@
 import logging
+import time
+from functools import wraps
+
 logger = logging.getLogger("app").getChild('handlers')
 
 def replace_all(text: str, replacements: dict):
     for k, v in replacements.items():
         text = text.replace(str(k), str(v))
     return text
-
-def suppress(fn, *args, **kwargs):
-    try:
-        return fn(*args, **kwargs)
-    except Exception as e:
-        logger.error(e)
-        return "error"
 
 def get_param(default: any, d: dict, path: list[str]):
     try:
@@ -21,7 +17,7 @@ def get_param(default: any, d: dict, path: list[str]):
             try:
                 curr_data = curr_data[path[path_part_iter]]
             except:
-                logger.warning(f'Parameter {path[-1]} turning default ({default}) because: key {path[path_part_iter]} not found in dict({curr_data})')
+                logger.warning(f'Parameter {path[-1]} turning default ({default}) because: key "{path[path_part_iter]}" not found in dict({[k for k,v in curr_data.items()]})')
                 return default
             if path_part_iter == path_len - 1:
                 logger.debug(f'Found param {path[-1]}: {curr_data}')
@@ -30,8 +26,6 @@ def get_param(default: any, d: dict, path: list[str]):
         logger.warning(f'Parameter {path[-1]} doesnt filled, set to default {default}')
         return default
 
-import time
-from functools import wraps
 
 def timer(func):
     @wraps(func)

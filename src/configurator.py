@@ -2,8 +2,8 @@ import json
 from src.handlers import replace_all
 from pathlib import Path
 from config.config import ModuleConfig
-import logging
-logger = logging.getLogger('app').getChild('rep').getChild('configurator')
+import logging as _logging
+logger = _logging.getLogger('serv').getChild('rep').getChild('configurator')
 
 def read_configuration_file(proj_param:str):
     configuration_filename = replace_all(
@@ -21,6 +21,60 @@ def read_configuration_file(proj_param:str):
         logger.error(f'Cant read configuration file from {configuration_file_path}')
         raise e
     return configuration_file_data
+
+def check_logic_of_configuration(configuration_in_dict: dict, ignore_errors: bool):
+
+    errors: list[dict] = []
+    def add_error(message:str, by_check: str):
+        er_mes = message,
+        logger.error(er_mes)
+        errors.append({'message': message, 'by_check': by_check})
+
+    _cfg = configuration_in_dict
+
+    configured_ref_names = [ref_n for ref_n, ref_cfg in _cfg['refs'].items()]
+    
+    for rep_name, rep_cfg in _cfg['reports'].items():
+        logger.info(f'Started check logic of report "{rep_name}" configuration')
+        # используемые в отчетах справочники должны быть описаны в конфигурации справочников
+        logger.debug(f'started used refs config check')
+        for using_ref in rep_cfg['mart_structure']['using_refs']:
+            if (using_ref not in configured_ref_names):
+                add_error(f'Report {rep_name} uses ref {using_ref}, which dont implemented in configuration: {configured_ref_names}', 'ref')
+        
+        rep_attributes_source = rep_cfg['group_attributes_source']
+        rep_amounts_source = rep_cfg['group_amounts_source']
+
+        configured_attributes_sources = [k for k,v in _cfg['sources']['attributes'].items()]
+        configured_amounts_sources = [k for k,v in _cfg['sources']['amounts'].items()]
+        logger.debug(f'started used sources config check')
+        # необходимые source сконфигурированы
+        if rep_attributes_source not in configured_attributes_sources:
+            add_error(f'Report {rep_name} uses attr source {rep_attributes_source}, which not implemented in configuration: {configured_attributes_sources}', 'attr source')
+        if rep_amounts_source not in configured_amounts_sources:
+            add_error(f'Report {rep_name} uses attr source {rep_amounts_source}, which not implemented in configuration: {configured_amounts_sources}', 'amount source')
+        
+        # в source должны быть столбцы, которые указаны как initial отчета
+        full_attr_source_cols = \
+            _cfg['sources']['attributes'][rep_attributes_source]['columns'] \
+            + [k for k,v in _cfg['sources']['attributes'][rep_attributes_source]['additional_columns'].items()]
+        logger.debug(f'started init cols check')
+        for init_rep_col in rep_cfg['initial_columns']:
+            if init_rep_col not in full_attr_source_cols:
+                add_error(f'Report {rep_name} uses init col {init_rep_col}, which not described in attr source {rep_attributes_source} cols: {full_attr_source_cols}','init cols')
+        
+    # выбрасываем ошибку, если не ignore_errors
+    result = 'ok' if len(errors) == 0 else 'bad'
+    text = '\n'.join([f'{i+1}. By check {dict_error["by_check"]} error: {dict_error["message"]}' for i, dict_error in enumerate(errors)]) if result != 'ok' else 'All ok.'
+    if not ignore_errors and result == 'bad':
+        raise Exception(f'Error message: \n{text}')
+    else:
+        logger.info(f'Full check logic report: \n{text}')
+        return result
+
+            
+
+
 
 class ReportsConfigurationModel():
     def __init__(self, configuration_file_data:dict):
