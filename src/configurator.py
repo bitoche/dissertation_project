@@ -22,8 +22,20 @@ def read_configuration_file(proj_param:str):
         raise e
     return configuration_file_data
 
-def check_logic_of_configuration(configuration_in_dict: dict, ignore_errors: bool):
+def check_logic_of_configuration(configuration_in_dict: dict = read_configuration_file('demo1'), ignore_errors: bool = False):
+    """
+    Выводит отчет о логических ошибках в конфигурации JSON модуля (`reports_config_<proj_param>.json`). Возвращает 'ok', если ошибок нет, и 'bad' если найдены ошибки.
 
+    :param configuration_in_dict: Прочитанный dict JSON-конфигурации модуля. Если его не задать, будет читаться конфигурация с постфиксом `demo1`.
+    :param ignore_errors: Параметр, при `True` которого метод не выбросит ошибки при нахождении логических ошибок в конфигурации. По умолчанию `False`
+
+    Реализованные проверки:
+    ---
+    - Проверка подключенных в отчет справочников на сконфигурированность;
+    - Проверка подключенных в отчет источников на сконфигурированность;
+    - Проверка initial cols отчета на описание в источнике;
+    - Проверка конструктора на сконфигурированность.
+    """
     errors: list[dict] = []
     def add_error(message:str, by_check: str):
         er_mes = message,
@@ -62,6 +74,12 @@ def check_logic_of_configuration(configuration_in_dict: dict, ignore_errors: boo
         for init_rep_col in rep_cfg['initial_columns']:
             if init_rep_col not in full_attr_source_cols:
                 add_error(f'Report {rep_name} uses init col {init_rep_col}, which not described in attr source {rep_attributes_source} cols: {full_attr_source_cols}','init cols')
+
+        # constructor сконфигурирован
+        constr = rep_cfg["using_constructor"]
+        configured_constructors = [k for k,v in _cfg['constructors'].items()]
+        if constr not in configured_constructors:
+            add_error(f'Report {rep_name} uses constructor {constr}, which not configured: {configured_constructors}', 'constr')
         
     # выбрасываем ошибку, если не ignore_errors
     result = 'ok' if len(errors) == 0 else 'bad'
@@ -71,9 +89,6 @@ def check_logic_of_configuration(configuration_in_dict: dict, ignore_errors: boo
     else:
         logger.info(f'Full check logic report: \n{text}')
         return result
-
-            
-
 
 
 class ReportsConfigurationModel():

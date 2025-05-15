@@ -66,6 +66,13 @@
             }
         }
     },
+    "constructors": {
+        "amt": {
+            "filename": "constructor_rep_amt.xlsx",
+            "constructor_sheet_name": "constructor",
+            "header_at": 3
+        }
+    },
     "reports": {
         "amt": {
             "report_name": "rep_ifrs17_amt",
@@ -92,10 +99,7 @@
                     "report_item_desc",
                     "amount_amt"
                 ],
-                "using_constructor": {
-                    "filename": "constructor_rep_amt.xlsx",
-                    "constructor_sheet_name": "constructor"
-                },
+                "using_constructor": "amt",
                 "using_refs": [
                     "ref_report_items"
                 ]
