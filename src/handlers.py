@@ -9,7 +9,7 @@ def replace_all(text: str, replacements: dict):
         text = text.replace(str(k), str(v))
     return text
 
-def get_param(default: any, d: dict, path: list[str]):
+def get_param(default: any, d: dict[str, any], path: list[str]):
     try:
         path_len = len(path)
         curr_data = d
