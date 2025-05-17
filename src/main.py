@@ -114,27 +114,60 @@ def start_calc(item: GeneralInfo):
         constructor_config = get_param(None, reports_config.configuration_data_dict, ['constructors', rep_using_constructor])
         constructor_df = read_constructor(constructor_config)
         rlog.info(f'constructor:\n{constructor_df}')
+        
+        # получение уникальных метрик из конструктора
+        calc_formula_constructor_col = constructor_df['calc_formula'].astype(str) # столбец с указанием из каких показателей состоит показатель
+        unique_used_metrics:list[str] = []
+        for metrics_in_row in calc_formula_constructor_col:
+            list_row_metrics: list[str] = metrics_in_row.split(",")
+            for metric in list_row_metrics:
+                metric = metric.strip()
+                if metric not in unique_used_metrics:
+                    unique_used_metrics.append(metric)
+        # / получение уникальных метрик из конструктора
 
         report_date = sql_variable(rep, SQL_VAR.VARIABLE)(report_date)
         prev_report_date = sql_variable(rep, SQL_VAR.VARIABLE)(prev_report_date)
         actual_date = sql_variable(rep, SQL_VAR.VARIABLE)(actual_date)
         calc_id = sql_variable(rep, SQL_VAR.VARIABLE)(calc_id)
 
-        select_group_attrs_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_group_attrs.sql'), 'r').read()
-        select_group_attrs_script = sql_variable(rep, SQL_VAR.STRUCTURE)(select_group_attrs_script)
-
         db_schema_input = sql_variable(rep, SQL_VAR.VARIABLE)(DB_SCHEMA_INPUT_DATA)
         db_schema_rep = sql_variable(rep, SQL_VAR.VARIABLE)(DB_SCHEMA_REPORTS)
         db_schema_ref = sql_variable(rep, SQL_VAR.VARIABLE)(DB_SCHEMA_REFERENCES)
         db_schema_sandbox = sql_variable(rep, SQL_VAR.VARIABLE)(DB_SCHEMA_SANDBOX)
 
+        select_group_attrs_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_group_attrs.sql'), 'r').read()
+        select_group_attrs_script = sql_variable(rep, SQL_VAR.STRUCTURE)(select_group_attrs_script)
+        
+        rep_group_results_source_name = get_param(None, rep_config, 'group_amounts_source')
+        group_results_source_config = get_param(None, reports_config.configuration_data_dict, ['sources', 'amounts', rep_group_results_source_name])
+
         select_group_results_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_group_amounts.sql'), 'r').read()
         select_group_results_script = sql_variable(rep, SQL_VAR.STRUCTURE)(select_group_results_script)
 
-        
+        group_results_source_table_name = sql_variable(rep, SQL_VAR.VARIABLE)(rep_group_results_source_name)
+        group_results_cols_list = get_param(None, group_results_source_config, ['columns'])
+        # преобразование в str для query
+        group_results_cols_list = ", ".join(group_results_cols_list) if len(group_results_cols_list)>0 else 'NOT FOUND COLS'
+        group_results_cols_list = sql_variable(rep, SQL_VAR.STRUCTURE)(group_results_cols_list)
         select_group_results_query = prepare_query(select_group_results_script, sql_variables[rep])
         rlog.info(f'Started get group results: \n{select_group_results_query}')
         results_by_groups = pd.read_sql(select_group_results_query, con=get_connection_row())
+        rlog.debug(f'results by groups:\n{results_by_groups}')
+
+        # проверка - заполнены ли все необходимые метрики по группам
+        not_filled_metrics: list[str] = []
+        for metric in results_by_groups['amount_type_cd']:
+            if metric not in unique_used_metrics:
+                not_filled_metrics.append(metric)
+        if len(not_filled_metrics) > 0:
+            _nfmetr_text = ''
+            for i, _m in enumerate(not_filled_metrics, 1):
+                _nfmetr_text += f'\n{i}. {_m}'
+            _ex = f'Report {rep} using not filled in result source metrics:{_nfmetr_text}'
+            raise Exception(_ex)
+        # / проверка - заполнены ли все необходимые метрики по группам
+
 
         # data_mart_create_script = prepare_query(query=open(Path(MODULE_SCRIPTS_PATH, 'create_rep_data_mart.sql'), 'r').read(),
         #                                         prepared_variables_dict=sql_variables[rep])
