@@ -6,6 +6,19 @@ from .config import LoggingConfig
 
 # Основные настройки
 LOG_LEVEL = LoggingConfig.LOG_LEVEL
+match LOG_LEVEL:
+    case 'INFO':
+        LOG_LEVEL = logging.INFO
+    case 'DEBUG':
+        LOG_LEVEL = logging.DEBUG
+    case 'WARNING':
+        LOG_LEVEL = logging.WARNING
+    case 'ERROR':
+        LOG_LEVEL = logging.ERROR
+    case _:
+        what = LOG_LEVEL
+        LOG_LEVEL = logging.INFO
+        logging.info(f'Cant parse log level \'{what}\'. Setted to default = {LOG_LEVEL} (int-fmtted)')
 LOGS_PATH = LoggingConfig.LOGS_PATH
 LOG_FILE = join_path(LOGS_PATH, 'reports.log')
 
