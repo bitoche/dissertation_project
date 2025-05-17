@@ -21,6 +21,11 @@ class DBConfig:
     DB_USER = env('DB_USER')
     DB_PASS = env('DB_PASS')
     DB_NAME = env('DB_NAME')
+    class SchemasConfig:
+        DB_SCHEMA_INPUT_DATA = env('DB_SCHEMA_INPUT_DATA')
+        DB_SCHEMA_REPORTS = env('DB_SCHEMA_REPORTS')
+        DB_SCHEMA_REFERENCES = env('DB_SCHEMA_REFERENCES')
+        DB_SCHEMA_SANDBOX = env('DB_SCHEMA_SANDBOX')
 
 class AppConfig:
     PROJ_PARAM = env('PROJ_PARAM')

@@ -1,9 +1,9 @@
 from config.config import DBConfig
 import psycopg2
-from .handlers import replace_all, timer
+from ..handlers import replace_all, timer
 import logging
 
-logger = logging.getLogger('app').getChild('db_conn')
+logger = logging.getLogger('serv').getChild('db_conn')
 
 def get_connection_row():
     row = replace_all(
@@ -30,3 +30,15 @@ def check_connection_status():
     except Exception as e:
         logger.error(f"Connection error: {e}")
         return "not connected"
+    
+def execute_query(query: str, connection):
+    with connection as conn:
+        try:
+            curs = conn.cursor()
+            curs.execute(query)
+        except Exception as e:
+            logger.exception(f'Error while executing query:\n{e}')
+            raise e
+        finally:
+            conn.commit()
+    

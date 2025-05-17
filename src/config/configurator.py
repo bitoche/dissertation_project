@@ -76,7 +76,7 @@ def check_logic_of_configuration(configuration_in_dict: dict = read_configuratio
                 add_error(f'Report {rep_name} uses init col {init_rep_col}, which not described in attr source {rep_attributes_source} cols: {full_attr_source_cols}','init cols')
 
         # constructor сконфигурирован
-        constr = rep_cfg["using_constructor"]
+        constr = rep_cfg["mart_structure"]["using_constructor"]
         configured_constructors = [k for k,v in _cfg['constructors'].items()]
         if constr not in configured_constructors:
             add_error(f'Report {rep_name} uses constructor {constr}, which not configured: {configured_constructors}', 'constr')
@@ -85,6 +85,7 @@ def check_logic_of_configuration(configuration_in_dict: dict = read_configuratio
     result = 'ok' if len(errors) == 0 else 'bad'
     text = '\n'.join([f'{i+1}. By check {dict_error["by_check"]} error: {dict_error["message"]}' for i, dict_error in enumerate(errors)]) if result != 'ok' else 'All ok.'
     if not ignore_errors and result == 'bad':
+        logger.exception(f'Error message: \n{text}')
         raise Exception(f'Error message: \n{text}')
     else:
         logger.info(f'Full check logic report: \n{text}')

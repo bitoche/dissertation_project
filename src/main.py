@@ -1,12 +1,22 @@
-from src.db_connection import check_connection_status
+from src.config.db_connection import check_connection_status, get_connection_row
 from src.model.interface import GeneralInfo
 from src.handlers import timer, get_param
-from config.config import AppConfig
-from src.configurator import read_configuration_file, ReportsConfigurationModel, check_logic_of_configuration
+from config.config import AppConfig, ModuleConfig, DBConfig
+from src.config.configurator import read_configuration_file, ReportsConfigurationModel, check_logic_of_configuration
 import logging
+from .reports.excel_parser import read_constructor
+from .reports.syntax_parser import prepare_query, sql_variables, sql_variable, SQL_VAR
+from pathlib import Path
+import pandas as pd
 
 app_log = logging.getLogger('serv')
 mf_log = app_log.getChild('main')
+
+MODULE_SCRIPTS_PATH = ModuleConfig.MODULE_SCRIPTS_PATH
+DB_SCHEMA_INPUT_DATA = DBConfig.SchemasConfig.DB_SCHEMA_INPUT_DATA
+DB_SCHEMA_REPORTS = DBConfig.SchemasConfig.DB_SCHEMA_REPORTS
+DB_SCHEMA_REFERENCES = DBConfig.SchemasConfig.DB_SCHEMA_REFERENCES
+DB_SCHEMA_SANDBOX = DBConfig.SchemasConfig.DB_SCHEMA_SANDBOX
 
 calc_statuses = {}
 
@@ -91,10 +101,49 @@ def start_calc(item: GeneralInfo):
     percents_remain = 100 - _status.percent
     percents_per_rep = (percents_remain) // len(activated_reports)
     for rep in activated_reports:
-        _status._upd(_status.percent + percents_per_rep, "in progress", f"processing report {rep}", calc_id)
 
         rlog = mf_log.getChild(rep)
         rlog.info(f"Started report {rep}")
+
+        # чтение конфигурации этого отчета
+        rep_config = get_param(None, reports_config.configuration_data_dict, ['reports', rep])
+        mart_config = get_param(None, rep_config, ['mart_structure'])
+
+        # чтение конструктора
+        rep_using_constructor = get_param(None, mart_config, ['using_constructor'])
+        constructor_config = get_param(None, reports_config.configuration_data_dict, ['constructors', rep_using_constructor])
+        constructor_df = read_constructor(constructor_config)
+        rlog.info(f'constructor:\n{constructor_df}')
+
+        report_date = sql_variable(rep, SQL_VAR.VARIABLE)(report_date)
+        prev_report_date = sql_variable(rep, SQL_VAR.VARIABLE)(prev_report_date)
+        actual_date = sql_variable(rep, SQL_VAR.VARIABLE)(actual_date)
+        calc_id = sql_variable(rep, SQL_VAR.VARIABLE)(calc_id)
+
+        select_group_attrs_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_group_attrs.sql'), 'r').read()
+        select_group_attrs_script = sql_variable(rep, SQL_VAR.STRUCTURE)(select_group_attrs_script)
+
+        db_schema_input = sql_variable(rep, SQL_VAR.VARIABLE)(DB_SCHEMA_INPUT_DATA)
+        db_schema_rep = sql_variable(rep, SQL_VAR.VARIABLE)(DB_SCHEMA_REPORTS)
+        db_schema_ref = sql_variable(rep, SQL_VAR.VARIABLE)(DB_SCHEMA_REFERENCES)
+        db_schema_sandbox = sql_variable(rep, SQL_VAR.VARIABLE)(DB_SCHEMA_SANDBOX)
+
+        select_group_results_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_group_amounts.sql'), 'r').read()
+        select_group_results_script = sql_variable(rep, SQL_VAR.STRUCTURE)(select_group_results_script)
+
+        
+        select_group_results_query = prepare_query(select_group_results_script, sql_variables[rep])
+        rlog.info(f'Started get group results: \n{select_group_results_query}')
+        results_by_groups = pd.read_sql(select_group_results_query, con=get_connection_row())
+
+        # data_mart_create_script = prepare_query(query=open(Path(MODULE_SCRIPTS_PATH, 'create_rep_data_mart.sql'), 'r').read(),
+        #                                         prepared_variables_dict=sql_variables[rep])
+
+        # rlog.info(f'PREPARED QUERY:\n{data_mart_create_script}')
+
+        _status._upd(_status.percent + percents_per_rep, "in progress", f"processing report {rep}", calc_id)
+
+        
 
     _status._upd(100, "successful", "completed", calc_id)
     # except Exception as e:
