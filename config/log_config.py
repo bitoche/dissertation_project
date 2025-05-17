@@ -44,7 +44,7 @@ class AppConsoleFilter(logging.Filter):
 # Настройка логирования
 def setup_logging():
     # Форматтеры
-    console_formatter = logging.Formatter('%(asctime)s | %(message)s')
+    console_formatter = logging.Formatter('[ %(asctime)-10s | %(levelname)-8s | %(name)-10s ] %(message)s')
     file_formatter = logging.Formatter('[ %(asctime)-10s | %(levelname)-8s | %(name)-10s ] %(message)s')
 
     # Обработчик для консоли
@@ -96,6 +96,7 @@ def setup_logging():
         logger.setLevel('INFO')
         logger.handlers.clear()
         logger.addHandler(console_handler)
+        logger.addHandler(file_handler)
         logger.propagate = False
 
     # Тестовые сообщения
