@@ -3,7 +3,7 @@ from config.config import VERSIONS
 from config.log_config import setup_logging
 from src.model.interface import GeneralInfo
 from src.main import start_calc, get_calc_status
-from src.config.db_connection import check_connection_status
+from src.tests.database_tests import check_connection_status
 import logging
 
 setup_logging()

@@ -1,6 +1,8 @@
 import pandas as pd
 import psycopg2
 import logging as _logging
+from src.handlers import timer
+from src.config.db_connection import get_connection_row
 
 logger = _logging.getLogger("serv").getChild("tester")
 
@@ -32,3 +34,15 @@ def cols_exists_test(schema_name:str, table_name:str, cols:list[str], conn_str:s
             finally:
                 conn.rollback()
     return errors
+
+@timer
+def check_connection_status():
+    logger.debug(f'Get db connection status')
+    try:
+        conn_str = get_connection_row()
+        with psycopg2.connect(conn_str) as conn:
+            logger.debug(f'Successfully connected to DB.')
+        return "ok"
+    except Exception as e:
+        logger.error(f"Connection error: {e}")
+        return "not connected"

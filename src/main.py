@@ -1,4 +1,4 @@
-from src.config.db_connection import check_connection_status, get_connection_row
+from src.config.db_connection import get_connection_row
 from src.model.interface import GeneralInfo, calc_date_fmts
 from src.handlers import timer, get_param, create_path_if_not_exists
 from config.config import AppConfig, ModuleConfig, DBConfig
@@ -85,7 +85,7 @@ def start_calc(item: GeneralInfo):
     )
 
     # тест подключения к бд
-    if check_connection_status() == "not connected":
+    if module_db_tests.check_connection_status() == "not connected":
         _status._upd(None, "error", "db connection does not exists", calc_id)
         return _status.get_dict_status()
 

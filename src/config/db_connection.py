@@ -18,18 +18,6 @@ def get_connection_row():
     )
     logger.debug(f'Get connection row: {row}')
     return row
-
-@timer
-def check_connection_status():
-    logger.debug(f'Get db connection status')
-    try:
-        conn_str = get_connection_row()
-        with psycopg2.connect(conn_str) as conn:
-            logger.debug(f'Successfully connected to DB.')
-        return "ok"
-    except Exception as e:
-        logger.error(f"Connection error: {e}")
-        return "not connected"
     
 def execute_query(query: str, connection):
     with connection as conn:
