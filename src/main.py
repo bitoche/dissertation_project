@@ -3,7 +3,7 @@ from src.model.interface import GeneralInfo, calc_date_fmts
 from src.handlers import timer, get_param, create_path_if_not_exists
 from config.config import AppConfig, ModuleConfig, DBConfig
 from src.config.configurator import read_configuration_file, ReportsConfigurationModel, check_logic_of_configuration
-import logging
+import logging as _logging
 from .reports.excel_parser import read_constructor
 from .reports.syntax_parser import prepare_query, sql_variables, sql_variable, SQL_VAR
 from pathlib import Path
@@ -11,7 +11,7 @@ import pandas as pd
 import src.tests.database_tests as module_db_tests
 from datetime import datetime
 
-app_log = logging.getLogger('serv')
+app_log = _logging.getLogger('serv')
 mf_log = app_log.getChild('main')
 
 MODULE_SCRIPTS_PATH = ModuleConfig.MODULE_SCRIPTS_PATH
