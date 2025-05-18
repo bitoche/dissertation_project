@@ -157,7 +157,11 @@ def start_calc(item: GeneralInfo):
             for metric in list_row_metrics:
                 metric = metric.strip()
                 if metric not in unique_used_metrics:
-                    unique_used_metrics.append(metric)
+                    try:
+                        int(metr)
+                    except:
+                        rlog.info(f'Found new param to calc: {metric}')
+                        unique_used_metrics.append(metric)
         # / получение уникальных метрик из конструктора
 
         report_date = sql_variable(rep, SQL_VAR.VARIABLE)(report_date)
@@ -179,7 +183,7 @@ def start_calc(item: GeneralInfo):
         group_results_source_table_name = sql_variable(rep, SQL_VAR.VARIABLE)(rep_group_results_source_name)
         
         # преобразование в str для query
-        group_results_cols_list = ", ".join(group_results_cols_list) if len(group_results_cols_list)>0 else 'NOT FOUND COLS'
+        group_results_cols_list = ", ".join(group_results_cols_list) if len(group_results_cols_list) > 0 else 'NOT FOUND COLS' # достижимо, если в конфигурации источника не указано ни одной колонки
         group_results_cols_list = sql_variable(rep, SQL_VAR.STRUCTURE)(group_results_cols_list)
         select_group_results_query = prepare_query(select_group_results_script, sql_variables[rep])
         rlog.info(f'Started get group results: \n{select_group_results_query}')
@@ -202,7 +206,7 @@ def start_calc(item: GeneralInfo):
             raise Exception(_ex)
         # / проверка - заполнены ли все необходимые метрики по группам
 
-        group_attrs_cols_list = ", ".join(group_attrs_cols_list) if len(group_attrs_cols_list)>0 else 'NOT FOUND COLS'
+        group_attrs_cols_list = ", ".join(group_attrs_cols_list) if len(group_attrs_cols_list) > 0 else 'NOT FOUND COLS' # достижимо, если в конфигурации источника не указано ни одной колонки
         group_attrs_cols_list = sql_variable(rep, SQL_VAR.STRUCTURE)(group_attrs_cols_list)
         
         group_attr_source_table_name = sql_variable(rep, SQL_VAR.VARIABLE)(rep_group_attrs_source_name)
@@ -215,9 +219,62 @@ def start_calc(item: GeneralInfo):
         if len(group_attrs.index) == 0:
             _ex = f'Recieved group attrs len is 0. Further calculations dont make sense.'
             raise Exception(_ex)
-        groups_to_calc = ""
+        
+        groups_to_calc = group_attrs[get_param(None, group_attrs_source_config, 'primary_key_columns')].drop_duplicates() # уникальные группы из источника
+        groups_to_calc = (
+            groups_to_calc[groups_to_calc['calc_id'] == calc_id]
+            .drop(columns=['calc_id'])
+        )
+        rlog.info(f'groups_to_calc:\n{groups_to_calc}')
+
+        amount_amt_group_results_columns = get_param(None, group_results_source_config, 'amount_columns')
+        primary_key_group_results_columns = get_param(None, group_results_source_config, 'primary_key_columns')
+        results_for_groups_to_calc = results_by_groups[primary_key_group_results_columns + amount_amt_group_results_columns]
+        results_for_groups_to_calc = (
+            results_for_groups_to_calc[results_for_groups_to_calc['calc_id'] == calc_id]
+            .drop(columns=['calc_id'])
+        )
+        rlog.info(f'results_for_groups_to_calc:\n{results_for_groups_to_calc}')
 
         metrics_to_calc_from_constr = constructor_df['metric_name'].drop_duplicates().astype(str) # уникальные названия показателей для расчета
+
+        metrics_by_groups = {}
+        for index, group_row in groups_to_calc.iterrows():
+            group_id = group_row['group_id']
+            rlog.info(f'{index+1}. Started calc group "{group_id}"')
+
+            current_group_results:pd.DataFrame = results_for_groups_to_calc[results_for_groups_to_calc['group_id'] == group_id].drop(columns=['group_id'])
+            rlog.debug(f'current_group_results:\n{current_group_results}')
+            metrics_by_groups[group_id] = {}
+            for metr in  metrics_to_calc_from_constr:
+                calc_formula = constructor_df[constructor_df['metric_name'] == metr]['calc_formula'].iloc[0]
+                metr_value = 0
+                if calc_formula != "0" and calc_formula != 0:
+                    rlog.info(f'Calc_formula for "{metr}" from constructor: {calc_formula}')
+                    calc_formula_used_params = [p.strip() for p in calc_formula.split(",")]
+                    calc_formula_used_params_values = {}
+                    for param in calc_formula_used_params:
+                        filtered = current_group_results[current_group_results['amount_type_cd']==param][amount_amt_group_results_columns]
+                        if not filtered.empty:
+                            value = filtered.iloc(0)[0]
+                        else:
+                            rlog.error(f"No data found for amount_type_cd: {param}")
+                            value = 0
+                        calc_formula_used_params_values[param] = float(value)
+                        rlog.debug(f'{param} = {calc_formula_used_params_values[param]}')
+                    aggregated_value = 0
+                    for param, param_val in calc_formula_used_params_values.items():
+                        aggregated_value += param_val
+                    rlog.info(f'Aggregated value = {aggregated_value}')
+                    metr_value = aggregated_value
+                metrics_by_groups[group_id][metr] = metr_value
+            rlog.info(f'calculated metrics:\n{metrics_by_groups}')
+
+
+        
+        
+        
+        
         _com = """
     другой парсер формул:
     split по "and" -> strip -> имеем действия по три. 
