@@ -13,3 +13,6 @@ __pycache__
 .venv
 
 !.gitkeep
+
+# output_files_folder
+output_files/*

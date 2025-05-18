@@ -1,6 +1,6 @@
 from src.config.db_connection import check_connection_status, get_connection_row
-from src.model.interface import GeneralInfo
-from src.handlers import timer, get_param
+from src.model.interface import GeneralInfo, calc_date_fmts
+from src.handlers import timer, get_param, create_path_if_not_exists
 from config.config import AppConfig, ModuleConfig, DBConfig
 from src.config.configurator import read_configuration_file, ReportsConfigurationModel, check_logic_of_configuration
 import logging
@@ -9,11 +9,13 @@ from .reports.syntax_parser import prepare_query, sql_variables, sql_variable, S
 from pathlib import Path
 import pandas as pd
 import src.tests.database_tests as module_db_tests
+from datetime import datetime
 
 app_log = logging.getLogger('serv')
 mf_log = app_log.getChild('main')
 
 MODULE_SCRIPTS_PATH = ModuleConfig.MODULE_SCRIPTS_PATH
+MODULE_OUTPUT_PATH = ModuleConfig.MODULE_OUTPUT_FILES_PATH
 DB_SCHEMA_INPUT_DATA = DBConfig.SchemasConfig.DB_SCHEMA_INPUT_DATA
 DB_SCHEMA_REPORTS = DBConfig.SchemasConfig.DB_SCHEMA_REPORTS
 DB_SCHEMA_REFERENCES = DBConfig.SchemasConfig.DB_SCHEMA_REFERENCES
@@ -61,12 +63,17 @@ def update_ref(ref_name:str, config: dict):
 
 @timer
 def start_calc(item: GeneralInfo):
+    CURRENT_DATETIME = datetime.now()
+    CURRENT_DATETIME_STR = CURRENT_DATETIME.strftime("%Y_%m_%d_%H_%M_%S")
     DB_CONNECTION_ROW = get_connection_row()
 
     calc_id = item.calc_id
     report_date = item.report_date
+    report_date_fmt = calc_date_fmts[int(calc_id)]['report_date_fmt']
     prev_report_date = item.prev_report_date
+    prev_report_date_fmt = calc_date_fmts[int(calc_id)]['prev_report_date_fmt']
     actual_date = item.actual_date
+    actual_date_fmt = calc_date_fmts[int(calc_id)]['actual_date_fmt']
     mf_log.info(f'Started task: (calc_id={calc_id}, report_date={report_date}, prev_report_date={prev_report_date}, actual_date={actual_date})')
     
     _status = CalcStatus(
@@ -260,8 +267,8 @@ def start_calc(item: GeneralInfo):
                         else:
                             _ex = f"No data found for amount_type_cd: {param}."
                             if pass_errors == True:
-                                _ex += "It will be equal to zero."
                                 value = 0
+                                _ex += f"It will be equal to {value}."
                                 rlog.error(_ex)
                             else:
                                 raise Exception(_ex)
@@ -273,10 +280,39 @@ def start_calc(item: GeneralInfo):
                     rlog.info(f'Aggregated value = {aggregated_value}')
                     metr_value = aggregated_value
                 metrics_by_groups[group_id][metr] = metr_value
-            rlog.debug(f'calculated metrics:\n{metrics_by_groups}')
-
-
+        calculated_metrics_df = (
+            pd.DataFrame.from_dict(metrics_by_groups, orient='index')
+            .reset_index()
+            .rename(columns={'index': 'group_id'})
+            )
+        calculated_metrics_df = (
+            calculated_metrics_df
+            .melt(id_vars=['group_id'],
+                  value_vars=[col for col in calculated_metrics_df.columns if col not in ['group_id']],
+                  var_name='metric',
+                  value_name='amt'
+                  )
+        )
+        rlog.debug(f'calculated metrics:\n{calculated_metrics_df}')
         
+        # сборка итогового dataframe со всеми необходимыми столбцами
+        dt_report_date = datetime.strptime(report_date, report_date_fmt).date()
+        dt_prev_report_date = datetime.strptime(prev_report_date, prev_report_date_fmt).date()
+        mart_df = (
+            calculated_metrics_df
+            .merge(group_attrs, how='left', on='group_id')
+            .assign(report_date=lambda x: dt_report_date)
+            .assign(prev_report_date=lambda x: dt_prev_report_date)
+            .assign(load_dttm=lambda x: CURRENT_DATETIME)
+        )
+        mart_df['report_date'] = mart_df['report_date'].astype('date64[pyarrow]')
+        mart_df['prev_report_date'] = mart_df['prev_report_date'].astype('date64[pyarrow]')
+        mart_df['load_dttm'] = mart_df['load_dttm'].astype('datetime64[ns]')
+        rlog.info(f'mart:\n{mart_df}')
+
+        # временное сохранение полученной mart в output_files
+        with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, AppConfig.PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx')) as writer:
+            mart_df.to_excel(writer, sheet_name=f"temp_mart")
         
         
         

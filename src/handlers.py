@@ -44,3 +44,12 @@ def timer(func):
         logger.info(f"Function '{func.__name__}' executed in {execution_time:.4f} seconds")
         return result
     return wrapper
+from pathlib import Path
+import os
+def create_path_if_not_exists(path:Path):
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except:
+        logger.error(f'Cant create path: {path}')
+        return None
+    return path

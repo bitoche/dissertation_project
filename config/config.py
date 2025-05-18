@@ -41,5 +41,7 @@ class ModuleConfig:
     MODULE_SCRIPTS_PATH = env('MODULE_SCRIPTS_PATH')
 
 class VERSIONS:
-    API = env('API_VERSION', 'v1-auto-assigned')
-    CALCULATOR = env('CALCULATOR_VERSION', 'v1-auto-assigned')
+    API = env('API_VERSION', 'auto-assigned')
+    API_COMMENT = env('API_VERSION_COMMENT', '')
+    CALCULATOR = env('CALCULATOR_VERSION', 'auto-assigned')
+    CALCULATOR_COMMENT = env('CALCULATOR_VERSION_COMMENT', '')

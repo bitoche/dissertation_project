@@ -12,18 +12,29 @@ print("Starting gateway.py module import")  # Отладочное сообще�
 
 
 app_log = logging.getLogger('app')
-app_log.info('---------------------- Gateway module loaded ----------------------')
+# app_log.info('---------------------- Gateway module loaded ----------------------')
+
+_tags = [
+    {
+        "name": "calculation",
+        "description": VERSIONS.CALCULATOR_COMMENT
+    },
+    {
+        "name": "api"
+    }
+]
 
 app = FastAPI(title="IFRS17 Reports Service API",
               version=VERSIONS.API,
-              root_path="/python/api")
+              root_path="/python/api",
+              openapi_tags=_tags,
+              description=VERSIONS.API_COMMENT)
 
-_CALC = ['Calculation functions']
-_API = ['API']
+
 
 app_log.info('---------------------- Started Application! ----------------------')
 
-@app.get("/health", tags=_API)
+@app.get("/health", tags=['api'])
 def health_check():
     statuses = {
         "db_connection_status": check_connection_status(),
@@ -32,13 +43,17 @@ def health_check():
     check_result = "good" if all(v == "ok" for v in statuses.values()) else "bad"
     return {"check_result": check_result, "modules_statuses": statuses}
 
-@app.get("/getStatus/{calc_id}", tags=_API)
+@app.get("/getStatus/{calc_id}", tags=['api'])
 async def get_status(calc_id: int):
     status = get_calc_status(calc_id)
     return status
 
-@app.post(f"/{VERSIONS.CALCULATOR}/startCalc", tags=_CALC)
+@app.post(f"/{VERSIONS.CALCULATOR}/startCalc", tags=['calculation'])
 async def start_calculation(item: GeneralInfo):
-    app_log.info(f"Received calculation request: {item.model_dump()}")
-    result = start_calc(item)
-    return result
+    check_res = item.is_valid()
+    if check_res[0] == 'good':
+        app_log.info(f"Received calculation request: {item.model_dump()}")
+        result = start_calc(item)
+        return result # должен возвращать 'recieved'
+    else:
+        return check_res[1]

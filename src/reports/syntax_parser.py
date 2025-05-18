@@ -165,5 +165,5 @@ def prepare_query(query:str, prepared_variables_dict: dict, repeat = None):
         loc_vars_mess = f"\n-> Filled variables dict is: \n{beautiful_prep_var_dict}"
         raw_lined_query_mess = f"\n-> Query to prepare is:\n{lined_query}\n"
         ex = nf_vars_mess + loc_vars_mess + raw_lined_query_mess
-        logger.critical(ex)
+        logger.exception(ex)
         raise ValueError('Not found variables from query in prepared variables dict for this report.')
