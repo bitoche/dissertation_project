@@ -1,7 +1,7 @@
 {
     "general": {
         "auto_update_refs": true,
-        "dump_mart_to_file":true
+        "dump_mart_to_file": true
     },
     "activated_reports": [
         "amt"
@@ -41,7 +41,7 @@
                     "report_year": "datepart('year', '&report_date'::date)",
                     "report_month": "datepart('month', '&report_date'::date)"
                 },
-                "using_variables":[
+                "using_variables": [
                     "report_date"
                 ]
             }
@@ -92,9 +92,9 @@
                 "columns": [
                     "report_date",
                     "calc_id",
-                    "ifrs_approach_cd", 
-                    "group_id", 
-                    "portfolio_cd", 
+                    "ifrs_approach_cd",
+                    "group_id",
+                    "portfolio_cd",
                     "cohort_cd",
                     "report_item_desc",
                     "amount_amt"

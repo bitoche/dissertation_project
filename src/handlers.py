@@ -22,7 +22,7 @@ def get_param(default: any, d: dict[str, any], path: list[str] | str):
                     logger.warning(f'Parameter {path[-1]} turning default ({default}) because: key "{path[path_part_iter]}" not found in dict({[k for k,v in curr_data.items()]})')
                     return default
                 if path_part_iter == path_len - 1:
-                    logger.debug(f'Found param {path[-1]}: {curr_data}')
+                    logger.debug(f'Found param {".".join([part for part in path])}: {curr_data}')
                     return curr_data
         except:
             logger.warning(f'Parameter {path[-1]} doesnt filled, set to default {default}')

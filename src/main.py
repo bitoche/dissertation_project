@@ -8,6 +8,7 @@ from .reports.excel_parser import read_constructor
 from .reports.syntax_parser import prepare_query, sql_variables, sql_variable, SQL_VAR
 from pathlib import Path
 import pandas as pd
+import src.tests.database_tests as module_db_tests
 
 app_log = logging.getLogger('serv')
 mf_log = app_log.getChild('main')
@@ -17,6 +18,8 @@ DB_SCHEMA_INPUT_DATA = DBConfig.SchemasConfig.DB_SCHEMA_INPUT_DATA
 DB_SCHEMA_REPORTS = DBConfig.SchemasConfig.DB_SCHEMA_REPORTS
 DB_SCHEMA_REFERENCES = DBConfig.SchemasConfig.DB_SCHEMA_REFERENCES
 DB_SCHEMA_SANDBOX = DBConfig.SchemasConfig.DB_SCHEMA_SANDBOX
+
+
 
 calc_statuses = {}
 
@@ -58,6 +61,8 @@ def update_ref(ref_name:str, config: dict):
 
 @timer
 def start_calc(item: GeneralInfo):
+    DB_CONNECTION_ROW = get_connection_row()
+
     calc_id = item.calc_id
     report_date = item.report_date
     prev_report_date = item.prev_report_date
@@ -71,10 +76,10 @@ def start_calc(item: GeneralInfo):
         calc_id=calc_id
     )
 
+    # тест подключения к бд
     if check_connection_status() == "not connected":
         _status._upd(None, "error", "db connection does not exists", calc_id)
         return _status.get_dict_status()
-
 
     reports_config_data = read_configuration_file(AppConfig.PROJ_PARAM)
     
@@ -109,6 +114,35 @@ def start_calc(item: GeneralInfo):
         rep_config = get_param(None, reports_config.configuration_data_dict, ['reports', rep])
         mart_config = get_param(None, rep_config, ['mart_structure'])
 
+        rep_group_results_source_name = get_param(None, rep_config, 'group_amounts_source')
+        group_results_source_config = get_param(None, reports_config.configuration_data_dict, ['sources', 'amounts', rep_group_results_source_name])
+        group_results_cols_list = get_param(None, group_results_source_config, ['columns'])
+        rep_group_attrs_source_name = get_param(None, rep_config, 'group_attributes_source')
+        group_attrs_source_config = get_param(None, reports_config.configuration_data_dict, ['sources', 'attributes', rep_group_attrs_source_name])
+        group_attrs_cols_list = get_param(None, group_attrs_source_config, ['columns'])
+        
+        # тесты
+        necessary_tables = [
+            (DB_SCHEMA_INPUT_DATA, rep_group_results_source_name, group_results_cols_list), 
+            (DB_SCHEMA_INPUT_DATA, rep_group_attrs_source_name, group_attrs_cols_list)
+            ]
+        for _t in necessary_tables:
+            rlog.info(f'Run exist test for {_t[0]}.{_t[1]}')
+            test_res = module_db_tests.table_exists_test(_t[0], _t[1], DB_CONNECTION_ROW)
+            if test_res != 'ok':
+                _ex = f'Relation {_t[0]}.{_t[1]} does not exist in connected database.'
+                raise Exception(_ex)
+            else:
+                # тест столбцов таблицы
+                rlog.info(f'Run cols exist test for {_t[0]}.{_t[1]}: {_t[2]}')
+                cols_test_res = module_db_tests.cols_exists_test(_t[0], _t[1], _t[2], DB_CONNECTION_ROW)
+                if len(cols_test_res) > 0:
+                    _t = ''
+                    for test_res in cols_test_res:
+                        _t += f'{test_res}\n'
+                    _ex = _t
+                    raise Exception(_ex)
+
         # чтение конструктора
         rep_using_constructor = get_param(None, mart_config, ['using_constructor'])
         constructor_config = get_param(None, reports_config.configuration_data_dict, ['constructors', rep_using_constructor])
@@ -138,21 +172,18 @@ def start_calc(item: GeneralInfo):
 
         select_group_attrs_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_group_attrs.sql'), 'r').read()
         select_group_attrs_script = sql_variable(rep, SQL_VAR.STRUCTURE)(select_group_attrs_script)
-        
-        rep_group_results_source_name = get_param(None, rep_config, 'group_amounts_source')
-        group_results_source_config = get_param(None, reports_config.configuration_data_dict, ['sources', 'amounts', rep_group_results_source_name])
 
         select_group_results_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_group_amounts.sql'), 'r').read()
         select_group_results_script = sql_variable(rep, SQL_VAR.STRUCTURE)(select_group_results_script)
 
         group_results_source_table_name = sql_variable(rep, SQL_VAR.VARIABLE)(rep_group_results_source_name)
-        group_results_cols_list = get_param(None, group_results_source_config, ['columns'])
+        
         # преобразование в str для query
         group_results_cols_list = ", ".join(group_results_cols_list) if len(group_results_cols_list)>0 else 'NOT FOUND COLS'
         group_results_cols_list = sql_variable(rep, SQL_VAR.STRUCTURE)(group_results_cols_list)
         select_group_results_query = prepare_query(select_group_results_script, sql_variables[rep])
         rlog.info(f'Started get group results: \n{select_group_results_query}')
-        results_by_groups = pd.read_sql(select_group_results_query, con=get_connection_row())
+        results_by_groups = pd.read_sql(select_group_results_query, con=DB_CONNECTION_ROW)
         rlog.debug(f'results by groups:\n{results_by_groups}')
 
         # проверка - заполнены ли все необходимые метрики по группам
@@ -168,7 +199,49 @@ def start_calc(item: GeneralInfo):
             raise Exception(_ex)
         # / проверка - заполнены ли все необходимые метрики по группам
 
+        group_attrs_cols_list = ", ".join(group_attrs_cols_list) if len(group_attrs_cols_list)>0 else 'NOT FOUND COLS'
+        group_attrs_cols_list = sql_variable(rep, SQL_VAR.STRUCTURE)(group_attrs_cols_list)
+        
+        group_attr_source_table_name = sql_variable(rep, SQL_VAR.VARIABLE)(rep_group_attrs_source_name)
 
+
+        select_group_attrs_query = prepare_query(select_group_attrs_script, sql_variables[rep])
+        rlog.info(f'Started get group attrs: \n{select_group_attrs_query}')
+        group_attrs = pd.read_sql(select_group_attrs_query, con=DB_CONNECTION_ROW)
+        rlog.debug(f'group attrs:\n{group_attrs}')
+
+        groups_to_calc = ""
+
+        metrics_to_calc_from_constr = constructor_df['metric_name'].drop_duplicates().astype(str) # уникальные названия показателей для расчета
+        _com = """
+    другой парсер формул:
+    split по "and" -> strip -> имеем действия по три. 
+    записываем полученные действия в dict (например, and_dict)
+    для каждого действия (или если есть значения во временном dict с промежуточными результатами)
+        split по " " -> strip -> имеем столбец/значение, оператор, столбец/значение.
+        (генерируем условие для пандаса.)
+        если первое - значение:
+            (значит третье - значение)
+            парсим оператор.
+            делаем действие со значениями
+            если действие (то которые получили после сплита по "and") не одно:
+                записываем результат во временный dict (типа {1(номер действия): True или 234 (результат действия)}) 
+            если действие - одно:
+                записываем результат в переменную (например, result)
+        если первое - название столбца (начинается с буквы):
+            находим это значение для этой группы (парсер формул применяется для каждой группы, построчно для строк конструктора), этого calc_id и этого столбца. должно быть уникальным. обычно - по атрибутам, так что проблем не должно быть  
+            записываем найденное значение в переменную(например val_1)
+            если третье - название столбца:
+                находим это значение для этой группы, и....
+                записываем найденное значение в переменную (например val_2)
+            если третье - значение:
+                записываем найденное значение в переменную (например val_2)
+            парсим оператор
+            выполняем действие между значениями.
+    //////// не закончено, так как надо сохранить порядок действий, например если сплит не по "and" а по "or" и т д (так же могут быть скобочки)
+    //////// пока что столбец filter не будет использоваться
+        """
+    
         # data_mart_create_script = prepare_query(query=open(Path(MODULE_SCRIPTS_PATH, 'create_rep_data_mart.sql'), 'r').read(),
         #                                         prepared_variables_dict=sql_variables[rep])
 
