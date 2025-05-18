@@ -185,6 +185,9 @@ def start_calc(item: GeneralInfo):
         rlog.info(f'Started get group results: \n{select_group_results_query}')
         results_by_groups = pd.read_sql(select_group_results_query, con=DB_CONNECTION_ROW)
         rlog.debug(f'results by groups:\n{results_by_groups}')
+        if len(results_by_groups.index) == 0:
+            _ex = f'Recieved results by groups len is 0. Further calculations dont make sense.'
+            raise Exception(_ex)
 
         # проверка - заполнены ли все необходимые метрики по группам
         not_filled_metrics: list[str] = []
@@ -209,7 +212,9 @@ def start_calc(item: GeneralInfo):
         rlog.info(f'Started get group attrs: \n{select_group_attrs_query}')
         group_attrs = pd.read_sql(select_group_attrs_query, con=DB_CONNECTION_ROW)
         rlog.debug(f'group attrs:\n{group_attrs}')
-
+        if len(group_attrs.index) == 0:
+            _ex = f'Recieved group attrs len is 0. Further calculations dont make sense.'
+            raise Exception(_ex)
         groups_to_calc = ""
 
         metrics_to_calc_from_constr = constructor_df['metric_name'].drop_duplicates().astype(str) # уникальные названия показателей для расчета
