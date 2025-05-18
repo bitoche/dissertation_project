@@ -53,3 +53,10 @@ def create_path_if_not_exists(path:Path):
         logger.error(f'Cant create path: {path}')
         return None
     return path
+
+from datetime import datetime
+def manual_sleep(seconds: int):
+    secs = int(datetime.now().strftime("%S"))+20
+    time = datetime.now().strftime(f"%Y_%m_%d_%H_%M_{secs}")
+    while datetime.now().strftime(f"%Y_%m_%d_%H_%M_%S") != time:
+        continue

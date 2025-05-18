@@ -1,6 +1,6 @@
 from src.config.db_connection import get_connection_row
 from src.model.interface import GeneralInfo, calc_date_fmts
-from src.handlers import timer, get_param, create_path_if_not_exists
+from src.handlers import timer, get_param, create_path_if_not_exists, manual_sleep
 from config.config import AppConfig, ModuleConfig, DBConfig
 from src.config.configurator import read_configuration_file, ReportsConfigurationModel, check_logic_of_configuration
 import logging as _logging
@@ -392,6 +392,8 @@ def start_calc(item: GeneralInfo):
         #                                         prepared_variables_dict=sql_variables[rep])
 
         # rlog.info(f'PREPARED QUERY:\n{data_mart_create_script}')
+        
+        # manual_sleep(seconds=30)
 
         _status._upd(_status.percent + percents_per_rep, "in progress", f"processing report {rep}", calc_id)
 
