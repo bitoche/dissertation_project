@@ -19,7 +19,7 @@ DB_SCHEMA_REPORTS = DBConfig.SchemasConfig.DB_SCHEMA_REPORTS
 DB_SCHEMA_REFERENCES = DBConfig.SchemasConfig.DB_SCHEMA_REFERENCES
 DB_SCHEMA_SANDBOX = DBConfig.SchemasConfig.DB_SCHEMA_SANDBOX
 
-
+pass_errors = False # параметр, влияющий на то будет ли падать модуль от ошибок.
 
 calc_statuses = {}
 
@@ -258,8 +258,13 @@ def start_calc(item: GeneralInfo):
                         if not filtered.empty:
                             value = filtered.iloc(0)[0]
                         else:
-                            rlog.error(f"No data found for amount_type_cd: {param}")
-                            value = 0
+                            _ex = f"No data found for amount_type_cd: {param}."
+                            if pass_errors == True:
+                                _ex += "It will be equal to zero."
+                                value = 0
+                                rlog.error(_ex)
+                            else:
+                                raise Exception(_ex)
                         calc_formula_used_params_values[param] = float(value)
                         rlog.debug(f'{param} = {calc_formula_used_params_values[param]}')
                     aggregated_value = 0
@@ -268,7 +273,7 @@ def start_calc(item: GeneralInfo):
                     rlog.info(f'Aggregated value = {aggregated_value}')
                     metr_value = aggregated_value
                 metrics_by_groups[group_id][metr] = metr_value
-            rlog.info(f'calculated metrics:\n{metrics_by_groups}')
+            rlog.debug(f'calculated metrics:\n{metrics_by_groups}')
 
 
         
