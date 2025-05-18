@@ -74,6 +74,7 @@ def start_calc(item: GeneralInfo):
     prev_report_date_fmt = calc_date_fmts[int(calc_id)]['prev_report_date_fmt']
     actual_date = item.actual_date
     actual_date_fmt = calc_date_fmts[int(calc_id)]['actual_date_fmt']
+
     mf_log.info(f'Started task: (calc_id={calc_id}, report_date={report_date}, prev_report_date={prev_report_date}, actual_date={actual_date})')
     
     _status = CalcStatus(
@@ -116,6 +117,9 @@ def start_calc(item: GeneralInfo):
 
         rlog = mf_log.getChild(rep)
         rlog.info(f"Started report {rep}")
+
+        dt_report_date = sql_variable(rep, SQL_VAR.VARIABLE)(datetime.strptime(report_date, report_date_fmt).date())
+        dt_prev_report_date = sql_variable(rep, SQL_VAR.VARIABLE)(datetime.strptime(prev_report_date, prev_report_date_fmt).date())
 
         # чтение конфигурации этого отчета
         rep_config = get_param(None, reports_config.configuration_data_dict, ['reports', rep])
@@ -218,6 +222,13 @@ def start_calc(item: GeneralInfo):
         
         group_attr_source_table_name = sql_variable(rep, SQL_VAR.VARIABLE)(rep_group_attrs_source_name)
 
+        additional_group_attrs_columns_list:dict[str, str] =  get_param({}, group_attrs_source_config, ['additional_columns'])
+        if len(additional_group_attrs_columns_list) > 0:
+            _res_script = ', '
+            _res_script = _res_script + ', '.join([f'{_add_col_assign} as {_add_col_name}' for _add_col_name, _add_col_assign in additional_group_attrs_columns_list.items()])
+        else:
+            _res_script = ''
+        additional_group_attrs_cols_assign_script = sql_variable(rep, SQL_VAR.STRUCTURE)(_res_script)
 
         select_group_attrs_query = prepare_query(select_group_attrs_script, sql_variables[rep])
         rlog.info(f'Started get group attrs: \n{select_group_attrs_query}')
@@ -289,15 +300,14 @@ def start_calc(item: GeneralInfo):
             calculated_metrics_df
             .melt(id_vars=['group_id'],
                   value_vars=[col for col in calculated_metrics_df.columns if col not in ['group_id']],
-                  var_name='metric',
-                  value_name='amt'
+                  var_name='amount_type_cd',
+                  value_name='amount_amt'
                   )
         )
         rlog.debug(f'calculated metrics:\n{calculated_metrics_df}')
         
         # сборка итогового dataframe со всеми необходимыми столбцами
-        dt_report_date = datetime.strptime(report_date, report_date_fmt).date()
-        dt_prev_report_date = datetime.strptime(prev_report_date, prev_report_date_fmt).date()
+        
         mart_df = (
             calculated_metrics_df
             .merge(group_attrs, how='left', on='group_id')
@@ -314,6 +324,39 @@ def start_calc(item: GeneralInfo):
         with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, AppConfig.PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx')) as writer:
             mart_df.to_excel(writer, sheet_name=f"temp_mart")
         
+        # подготовка таблицы под витрину
+        data_mart_name = sql_variable(rep, SQL_VAR.VARIABLE)(get_param(None, mart_config, 'table_name'))
+        cols_configuration_from_json = get_param({}, reports_config.configuration_data_dict, ['cols_configuration'])
+        configurated_cols = [k for k,v in cols_configuration_from_json.items()]
+        def get_col_type(col_name: str):
+            if col_name not in configurated_cols:
+                return 'varchar'
+            else:
+                match cols_configuration_from_json[col_name]:
+                    case "str":
+                        return "varchar"
+                    case "int":
+                        return 'int'
+                    case "float":
+                        return 'numeric'
+                    case "date":
+                        return 'date'
+                    case "datetime":
+                        return 'timestamp'
+                    case _:
+                        return 'varchar'
+        cols_to_be_in_mart = get_param(None, mart_config, 'columns')
+        _cols_to_be_in_mart_script_parts = []
+        try:
+            for col_to_be_in_mart in cols_to_be_in_mart:
+                _cols_to_be_in_mart_script_parts.append(f'{col_to_be_in_mart} {get_col_type(col_to_be_in_mart)}')
+        except Exception as e:
+            raise e
+        cols_to_be_in_mart_with_types_script = sql_variable(rep, SQL_VAR.STRUCTURE)(', '.join(_cols_to_be_in_mart_script_parts))
+
+        prepare_data_mart_table_script = open(Path(MODULE_SCRIPTS_PATH, 'prepare_data_mart_table.sql'),'r').read()
+        prepare_data_mart_table_query = prepare_query(prepare_data_mart_table_script, sql_variables[rep])
+        rlog.info(f'Started prepare data mart table query execute:\n{prepare_data_mart_table_query}')
         
         
         _com = """

@@ -11,6 +11,18 @@
         "amt",
         "pl"
     ],
+    "cols_configuration": {
+        "group_id": "str",
+        "calc_id": "int",
+        "inception_dt": "date",
+        "amount_amt": "float",
+        "report_date": "date",
+        "prev_report_date": "date",
+        "inception_year": "int",
+        "inception_month": "int",
+        "report_year": "int",
+        "report_month": "int"
+    },
     "sources": {
         "attributes": {
             "res_groups_ifrs_17": {
@@ -36,13 +48,13 @@
                     "calc_id"
                 ],
                 "additional_columns": {
-                    "inception_year": "datepart('year', inception_dt)",
-                    "inception_month": "datepart('month', inception_dt)",
-                    "report_year": "datepart('year', '&report_date'::date)",
-                    "report_month": "datepart('month', '&report_date'::date)"
+                    "inception_year": "EXTRACT(YEAR FROM inception_dt)",
+                    "inception_month": "EXTRACT(MONTH FROM inception_dt)",
+                    "report_year": "EXTRACT(YEAR FROM '&dt_report_date'::date)",
+                    "report_month": "EXTRACT(MONTH FROM '&dt_report_date'::date)"
                 },
                 "using_variables": [
-                    "report_date"
+                    "dt_report_date"
                 ]
             }
         },
