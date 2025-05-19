@@ -23,6 +23,8 @@ DB_SCHEMA_SANDBOX = DBConfig.SchemasConfig.DB_SCHEMA_SANDBOX
 
 pass_errors = False # параметр, влияющий на то будет ли падать модуль от ошибок.
 
+refs_updated = False # указатель, обновлены ли за текущий запуск справочники
+
 calc_statuses = {}
 
 class CalcStatus:
@@ -110,6 +112,7 @@ def start_calc(item: GeneralInfo):
             
             mf_log.info(f'Started update ref {ref_name}')
             update_ref(ref_name, ref_config)
+        refs_updated = True # справочники обновлены при первом запуске
     
     percents_remain = 100 - _status.percent
     percents_per_rep = (percents_remain) // len(activated_reports)
@@ -358,13 +361,17 @@ def start_calc(item: GeneralInfo):
         prepare_data_mart_table_query = prepare_query(prepare_data_mart_table_script, sql_variables[rep])
         rlog.info(f'Started prepare data mart table query execute:\n{prepare_data_mart_table_query}')
         
+        # на этом этапе есть dataframe с полным содержанием расчитанных показателей (из конструктора) и всеми атрибутами групп (по сути, максимально полная витрина, но с "сырыми" значениями)
+        # оставшиеся действия:
+        # 1. подтянуть справочники (в конфигурации указано, на что маппиться)
+        # 2. собрать итоговую витрину по конфигурации 
         
         _com = """
     другой парсер формул:
     split по "and" -> strip -> имеем действия по три. 
     записываем полученные действия в dict (например, and_dict)
     для каждого действия (или если есть значения во временном dict с промежуточными результатами)
-        split по " " -> strip -> имеем столбец/значение, оператор, столбец/значение.
+        split по " " -> strip -> имеем список [столбец/значение, оператор, столбец/значение].
         (генерируем условие для пандаса.)
         если первое - значение:
             (значит третье - значение)
