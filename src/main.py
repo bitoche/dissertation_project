@@ -1,4 +1,4 @@
-from src.config.db_connection import get_connection_row
+from src.config.db_connection import get_connection_row, execute_query
 from src.model.interface import GeneralInfo, calc_date_fmts
 from src.handlers import timer, get_param, create_path_if_not_exists, manual_sleep
 from config.config import AppConfig, ModuleConfig, DBConfig
@@ -137,7 +137,7 @@ def start_calc(item: GeneralInfo):
     percents_remain = 100 - _status.percent
     percents_per_rep = (percents_remain) // len(activated_reports)
     for rep in activated_reports:
-
+        
         rlog = mf_log.getChild(rep)
         rlog.info(f"Started report {rep}")
 
@@ -147,6 +147,18 @@ def start_calc(item: GeneralInfo):
         # чтение конфигурации этого отчета
         rep_config = get_param(None, reports_config.configuration_data_dict, ['reports', rep])
         mart_config = get_param(None, rep_config, ['mart_structure'])
+
+        
+        # обновление необходимых справочников, если еще не производили
+        if not refs_updated:
+            required_refs: list[str] = get_param([], mart_config, ['using_refs'])
+            rlog.info(f'Started update required refs: {required_refs}')
+            for ref_name in required_refs:
+                ref_config = get_param(None, refs_configuration, ref_name)
+                update_ref(ref_name=ref_name, 
+                           config=ref_config, 
+                           connection=DB_CONNECTION_ROW)
+
 
         rep_group_results_source_name = get_param(None, rep_config, 'group_amounts_source')
         group_results_source_config = get_param(None, reports_config.configuration_data_dict, ['sources', 'amounts', rep_group_results_source_name])
@@ -181,7 +193,7 @@ def start_calc(item: GeneralInfo):
         rep_using_constructor = get_param(None, mart_config, ['using_constructor'])
         constructor_config = get_param(None, reports_config.configuration_data_dict, ['constructors', rep_using_constructor])
         constructor_df = read_constructor(constructor_config)
-        rlog.info(f'constructor:\n{constructor_df}')
+        rlog.debug(f'constructor:\n{constructor_df}')
         
         # получение уникальных метрик из конструктора
         calc_formula_constructor_col = constructor_df['calc_formula'].astype(str) # столбец с указанием из каких показателей состоит показатель
@@ -190,12 +202,15 @@ def start_calc(item: GeneralInfo):
             list_row_metrics: list[str] = metrics_in_row.split(",")
             for metric in list_row_metrics:
                 metric = metric.strip()
+                try:
+                    int(metric)
+                    rlog.debug(f'Found number: {metric}')
+                    continue
+                except:
+                    pass
                 if metric not in unique_used_metrics:
-                    try:
-                        int(metr)
-                    except:
-                        rlog.info(f'Found new param to calc: {metric}')
-                        unique_used_metrics.append(metric)
+                    rlog.debug(f'Found new param to calc: {metric}')
+                    unique_used_metrics.append(metric)
         # / получение уникальных метрик из конструктора
 
         report_date = sql_variable(rep, SQL_VAR.VARIABLE)(report_date)
@@ -266,7 +281,7 @@ def start_calc(item: GeneralInfo):
             groups_to_calc[groups_to_calc['calc_id'] == calc_id]
             .drop(columns=['calc_id'])
         )
-        rlog.info(f'groups_to_calc:\n{groups_to_calc}')
+        rlog.debug(f'groups_to_calc:\n{groups_to_calc}')
 
         amount_amt_group_results_columns = get_param(None, group_results_source_config, 'amount_columns')
         primary_key_group_results_columns = get_param(None, group_results_source_config, 'primary_key_columns')
@@ -275,7 +290,7 @@ def start_calc(item: GeneralInfo):
             results_for_groups_to_calc[results_for_groups_to_calc['calc_id'] == calc_id]
             .drop(columns=['calc_id'])
         )
-        rlog.info(f'results_for_groups_to_calc:\n{results_for_groups_to_calc}')
+        rlog.debug(f'results_for_groups_to_calc:\n{results_for_groups_to_calc}')
 
         metrics_to_calc_from_constr = constructor_df['metric_name'].drop_duplicates().astype(str) # уникальные названия показателей для расчета
 
@@ -291,7 +306,7 @@ def start_calc(item: GeneralInfo):
                 calc_formula = constructor_df[constructor_df['metric_name'] == metr]['calc_formula'].iloc[0]
                 metr_value = 0
                 if calc_formula != "0" and calc_formula != 0:
-                    rlog.info(f'Calc_formula for "{metr}" from constructor: {calc_formula}')
+                    rlog.debug(f'Calc_formula for "{metr}" from constructor: {calc_formula}')
                     calc_formula_used_params = [p.strip() for p in calc_formula.split(",")]
                     calc_formula_used_params_values = {}
                     for param in calc_formula_used_params:
@@ -311,7 +326,7 @@ def start_calc(item: GeneralInfo):
                     aggregated_value = 0
                     for param, param_val in calc_formula_used_params_values.items():
                         aggregated_value += param_val
-                    rlog.info(f'Aggregated value = {aggregated_value}')
+                    rlog.debug(f'Aggregated {metr} value = {aggregated_value}')
                     metr_value = aggregated_value
                 metrics_by_groups[group_id][metr] = metr_value
         calculated_metrics_df = (
@@ -378,23 +393,92 @@ def start_calc(item: GeneralInfo):
         cols_to_be_in_mart_with_types_script = sql_variable(rep, SQL_VAR.STRUCTURE)(', '.join(_cols_to_be_in_mart_script_parts))
 
         prepare_data_mart_table_script = open(Path(MODULE_SCRIPTS_PATH, 'prepare_data_mart_table.sql'),'r').read()
-        prepare_data_mart_table_query = prepare_query(prepare_data_mart_table_script, sql_variables[rep])
-        rlog.info(f'Started prepare-data-mart-table query execute:\n{prepare_data_mart_table_query}')
         
+        
+        rlog.info('Started data mart tests')
+        mart_table_exists = module_db_tests.table_exists_test(schema_name=DB_SCHEMA_REPORTS, table_name=data_mart_name, conn_str=DB_CONNECTION_ROW)
+        if mart_table_exists == 'ok':
+            mart_columns_not_exists = module_db_tests.cols_exists_test(schema_name=DB_SCHEMA_REPORTS, table_name=data_mart_name,
+                                                                   cols=cols_to_be_in_mart, conn_str=DB_CONNECTION_ROW)
+            if len(mart_columns_not_exists)>0:
+                _ex = f'Mart table exists, but it dont contains all requested cols: {cols_to_be_in_mart}\nResolve this error and retry.'
+                rlog.error(_ex)
+                raise Exception(_ex)
+            else:
+                rlog.info(f'Mart table exists and contain all required cols.')
+        else:
+            rlog.info('Mart table dont exists.')
+            prepare_data_mart_table_query = prepare_query(prepare_data_mart_table_script, sql_variables[rep])
+            rlog.info(f'Started prepare-data-mart-table query execute:\n{prepare_data_mart_table_query}')
+            execute_query(prepare_data_mart_table_query, DB_CONNECTION_ROW)
 
-        if not refs_updated:
-            required_refs = get_param([], mart_config, ['using_refs'])
-            rlog.info(f'Started update required refs: {required_refs}')
-            for ref_name in required_refs:
-                ref_config = get_param(None, refs_configuration, ref_name)
-                update_ref(ref_name=ref_name, 
-                           config=ref_config, 
-                           connection=DB_CONNECTION_ROW)
+
+        # # подключение справочников к dataframe с mart
+        # получение всех справочников
+        rlog.info(f'Started get required refs ({required_refs}) for mapping to mart.')
+        refs = {}
+        for ref in required_refs:
+            refs[ref] = {}
+            rlog.debug(f'started get {ref}')
+            ref_table_name = sql_variable(ref, SQL_VAR.VARIABLE)(ref)
+            db_schema_ref = sql_variable(ref, SQL_VAR.VARIABLE)(DB_SCHEMA_REFERENCES)
+            cd_col = get_param(None, refs_configuration, [ref, 'cd_col'])
+            name_col = get_param(None, refs_configuration, [ref, 'name_col'])
+            cols_to_mapping_list = [cd_col, name_col]
+            ref_cols_to_mapping_list = sql_variable(ref, SQL_VAR.STRUCTURE)(','.join(cols_to_mapping_list))
+            make_where_cond = get_param(False, refs_configuration, [ref, 'where_condition'])
+            
+            condition_to_select = sql_variable(ref, SQL_VAR.FLAG)(True if make_where_cond != False else False)
+
+            actual_date = sql_variable(ref, SQL_VAR.VARIABLE)(actual_date)
+
+            if condition_to_select:
+                where_condition_to_select_ref_to_mapping = sql_variable(ref, SQL_VAR.STRUCTURE)(make_where_cond)
+
+            select_ref_df_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_ref_to_mapping.sql'), 'r').read()
+            rlog.info(f'started prepare query to select {ref}')
+            select_ref_df_query = prepare_query(select_ref_df_script, sql_variables[ref])
+            rlog.debug(f'executing query:\n{select_ref_df_query}')
+            try:
+                ref_df = pd.read_sql(sql=select_ref_df_query, con=DB_CONNECTION_ROW)
+            except Exception as e:
+                rlog.exception(e)
+                raise
+            rlog.debug(f'successfully recieved needed table.')
+            refs[ref]['df'] = ref_df
+            refs[ref]['cd_col'] = cd_col
+            refs[ref]['name_col'] = name_col
+        beautiful_mart_df = (
+                mart_df.copy()
+                )
+        for ref_name, ref_data in refs.items():
+            rlog.info(f'Started merge mart with {ref_name}.')
+            cd_col = ref_data['cd_col']
+            name_col = ref_data['name_col']
+            ref_df = ref_data['df']
+            try:
+                beautiful_mart_df = (
+                    beautiful_mart_df
+                    .merge(ref_df, how='left', on=cd_col)
+                )
+            except Exception as e:
+                rlog.exception(f'Error! Merge cant be applied to data mart.')
+                raise
+        # временное сохранение полученной mart в output_files
+        with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx'), mode='a') as writer:
+            beautiful_mart_df.to_excel(writer, sheet_name=f"fully_merged_mart")
+        rlog.info(f'Started construct result mart {rep}')
+        try:
+            beautiful_mart_df = beautiful_mart_df[cols_to_be_in_mart]
+        except Exception as e:
+            rlog.exception(f'Error! Mart dont contains requested cols ({cols_to_be_in_mart}): {list(beautiful_mart_df.columns)}')
+            raise
+        rlog.debug(f'successful constructed result mart:\n{beautiful_mart_df}')
         
-        # на этом этапе есть dataframe с полным содержанием расчитанных показателей (из конструктора) и всеми атрибутами групп (по сути, максимально полная витрина, но с "сырыми" значениями)
-        # оставшиеся действия:
-        # 1. подтянуть справочники (в конфигурации указано, на что маппиться)
-        # 2. собрать итоговую витрину по конфигурации 
+        # временное сохранение полученной mart в output_files
+        with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx'), mode='a') as writer:
+            beautiful_mart_df.to_excel(writer, sheet_name=f"result_mart")
+        
         
         _com = """
     другой парсер формул:
@@ -434,7 +518,7 @@ def start_calc(item: GeneralInfo):
         rlog.info(f'Succsessful generated {rep} report.')
         _status._upd(_status.percent + percents_per_rep, "in progress", f"processing report {rep}", calc_id)
 
-    mf_log.info(f'Succesful end of generatig reports: {item}')
+    mf_log.info(f'Succesful end of generatig reports ({activated_reports}): {item}')
 
     _status._upd(100, "successful", "completed", calc_id)
     # except Exception as e:
