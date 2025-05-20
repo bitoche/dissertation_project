@@ -88,7 +88,7 @@ def check_logic_of_configuration(configuration_in_dict: dict = read_configuratio
         logger.exception(f'Error message: \n{text}')
         raise Exception(f'Error message: \n{text}')
     else:
-        logger.info(f'Full check logic report: \n{text}')
+        logger.info(f'Full check logic report: {text}')
         return result
 
 

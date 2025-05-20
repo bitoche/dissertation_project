@@ -4,7 +4,7 @@ from src.handlers import timer, get_param, create_path_if_not_exists, manual_sle
 from config.config import AppConfig, ModuleConfig, DBConfig
 from src.config.configurator import read_configuration_file, ReportsConfigurationModel, check_logic_of_configuration
 import logging as _logging
-from .reports.excel_parser import read_constructor
+from .reports.excel_parser import read_constructor, read_ref, RefReadModel
 from .reports.syntax_parser import prepare_query, sql_variables, sql_variable, SQL_VAR
 from pathlib import Path
 import pandas as pd
@@ -20,6 +20,8 @@ DB_SCHEMA_INPUT_DATA = DBConfig.SchemasConfig.DB_SCHEMA_INPUT_DATA
 DB_SCHEMA_REPORTS = DBConfig.SchemasConfig.DB_SCHEMA_REPORTS
 DB_SCHEMA_REFERENCES = DBConfig.SchemasConfig.DB_SCHEMA_REFERENCES
 DB_SCHEMA_SANDBOX = DBConfig.SchemasConfig.DB_SCHEMA_SANDBOX
+
+PROJ_PARAM = AppConfig.PROJ_PARAM
 
 pass_errors = False # параметр, влияющий на то будет ли падать модуль от ошибок.
 
@@ -47,24 +49,40 @@ class CalcStatus:
             "message": self.message
         }
 
-def update_ref(ref_name:str, config: dict):
-    from enum import Enum
-    class RefConfig(Enum):
-        filename = get_param(None, config, ['filename']) 
-        header_size = get_param(None, config, ['header'])
-        class ColParams(Enum):
-            code_col = get_param(None, config, ['cd_col'])
-            name_col = get_param(None, config, ['name_col'])
-    # если в файле нет cd или name колонки -- отметается
-    # for col in enumerate(RefConfig.ColParams):
-    #     if col not in df.cols:
-    #         raise KeyError(f'Column with name {col} not found in ref {ref_name} cols: {df.cols}')
-    # колонки, которые являются необязательными добавляются без проверки
-    # 
+def update_ref(ref_name:str, config: dict, connection):
+    filename = get_param(None, config, ['filename']) 
+    header_size = get_param(None, config, ['header'])
+    code_col = get_param(None, config, ['cd_col'])
+    name_col = get_param(None, config, ['name_col'])
+    read_ref_model = RefReadModel(filename=filename, sheet_name='ref', header=header_size)
+    errors: list[dict] = []
+    try:
+        ref_df: pd.DataFrame = read_ref(read_ref_model)
+    except Exception as e:
+        raise e
+    recieved_cols = list(ref_df.columns)
+    if code_col not in recieved_cols:
+        errors.append({'by_check': 'code col', 'message': f'code col "{code_col}" not in ref_df columns: {recieved_cols}'})
+    if name_col not in recieved_cols:
+        errors.append({'by_check': 'name col', 'message': f'name col "{name_col}" not in ref_df columns: {recieved_cols}'})
+    if len(errors)>0:
+        errors_str = ''
+        for i, err in enumerate(errors, 1):
+            errors_str+=f'\n{i}. Error while check {err["by_check"]}: {err["message"]}'
+        _ex = f'Errors while update ref {ref_name}:{errors_str}'
+        mf_log.error(_ex)
+        raise KeyError(_ex)
+    mf_log.info(f'Started upload {ref_name} to "{DB_SCHEMA_REFERENCES}"."{ref_name}"')
+    ref_df.to_sql(name=ref_name, 
+                  con=connection, 
+                  schema=DB_SCHEMA_REFERENCES, 
+                  index=False, 
+                  if_exists='replace')
     
 
 @timer
 def start_calc(item: GeneralInfo):
+    global refs_updated
     CURRENT_DATETIME = datetime.now()
     CURRENT_DATETIME_STR = CURRENT_DATETIME.strftime("%Y_%m_%d_%H_%M_%S")
     DB_CONNECTION_ROW = get_connection_row()
@@ -91,7 +109,7 @@ def start_calc(item: GeneralInfo):
         _status._upd(None, "error", "db connection does not exists", calc_id)
         return _status.get_dict_status()
 
-    reports_config_data = read_configuration_file(AppConfig.PROJ_PARAM)
+    reports_config_data = read_configuration_file(PROJ_PARAM)
     
     check_logic_of_configuration(reports_config_data, ignore_errors=False)
 
@@ -111,7 +129,9 @@ def start_calc(item: GeneralInfo):
             _status._upd(_status.percent + percents_per_ref, "in progress", f"processing load ref {ref_name}", calc_id)
             
             mf_log.info(f'Started update ref {ref_name}')
-            update_ref(ref_name, ref_config)
+            update_ref(ref_name=ref_name, 
+                       config=ref_config, 
+                       connection=DB_CONNECTION_ROW)
         refs_updated = True # справочники обновлены при первом запуске
     
     percents_remain = 100 - _status.percent
@@ -324,7 +344,7 @@ def start_calc(item: GeneralInfo):
         rlog.info(f'mart:\n{mart_df}')
 
         # временное сохранение полученной mart в output_files
-        with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, AppConfig.PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx')) as writer:
+        with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx')) as writer:
             mart_df.to_excel(writer, sheet_name=f"temp_mart")
         
         # подготовка таблицы под витрину
@@ -359,7 +379,17 @@ def start_calc(item: GeneralInfo):
 
         prepare_data_mart_table_script = open(Path(MODULE_SCRIPTS_PATH, 'prepare_data_mart_table.sql'),'r').read()
         prepare_data_mart_table_query = prepare_query(prepare_data_mart_table_script, sql_variables[rep])
-        rlog.info(f'Started prepare data mart table query execute:\n{prepare_data_mart_table_query}')
+        rlog.info(f'Started prepare-data-mart-table query execute:\n{prepare_data_mart_table_query}')
+        
+
+        if not refs_updated:
+            required_refs = get_param([], mart_config, ['using_refs'])
+            rlog.info(f'Started update required refs: {required_refs}')
+            for ref_name in required_refs:
+                ref_config = get_param(None, refs_configuration, ref_name)
+                update_ref(ref_name=ref_name, 
+                           config=ref_config, 
+                           connection=DB_CONNECTION_ROW)
         
         # на этом этапе есть dataframe с полным содержанием расчитанных показателей (из конструктора) и всеми атрибутами групп (по сути, максимально полная витрина, но с "сырыми" значениями)
         # оставшиеся действия:
@@ -401,10 +431,10 @@ def start_calc(item: GeneralInfo):
         # rlog.info(f'PREPARED QUERY:\n{data_mart_create_script}')
         
         # manual_sleep(seconds=30)
-
+        rlog.info(f'Succsessful generated {rep} report.')
         _status._upd(_status.percent + percents_per_rep, "in progress", f"processing report {rep}", calc_id)
 
-        
+    mf_log.info(f'Succesful end of generatig reports: {item}')
 
     _status._upd(100, "successful", "completed", calc_id)
     # except Exception as e:

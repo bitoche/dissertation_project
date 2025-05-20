@@ -6,6 +6,7 @@ from config.config import AppConfig, ModuleConfig
 PROJ_PARAM = AppConfig.PROJ_PARAM
 MODULE_INPUT_FILES_PATH = ModuleConfig.MODULE_INPUT_FILES_PATH
 CONSTRUCTORS_PATH = Path(MODULE_INPUT_FILES_PATH, 'constructors')
+REFS_PATH = Path(MODULE_INPUT_FILES_PATH, 'refs')
 
 import logging as _logging
 logger = _logging.getLogger("serv").getChild("excel_parser")
@@ -33,8 +34,24 @@ def read_constructor(constructor_config: dict):
                                   header=cconf.header)
     except Exception as e:
         logger.exception(f'Cant read constructor from {cconf.filepath}\n{e}')
-        raise Exception(e)
-    
+        raise e
     return constr_df
-    
-    
+
+class RefReadModel():
+    def __init__(self, filename: str,
+    sheet_name: str | int,
+    header: int):
+        self.filename = filename
+        self.sheet_name = sheet_name
+        self.header = header
+        
+
+def read_ref(ref_read_model: RefReadModel):
+    rp = Path(REFS_PATH, PROJ_PARAM, ref_read_model.filename)
+    try:
+        return pd.read_excel(io=rp, 
+                             sheet_name=ref_read_model.sheet_name, 
+                             header=ref_read_model.header)
+    except Exception as e:
+        logger.exception(f'Cant read excel file: {rp}')
+        raise e
