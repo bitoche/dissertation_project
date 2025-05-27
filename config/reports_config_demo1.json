@@ -1,10 +1,10 @@
 {
     "general": {
-        "auto_update_refs": false,
+        "auto_update_refs": true,
         "dump_mart_to_file": true
     },
     "activated_reports": [
-        "amt"
+        "pl"
     ],
     "all_reports": [
         "demo",
@@ -23,7 +23,35 @@
         "report_year": "int",
         "report_month": "int"
     },
+    "refs_cleanup_config": {
+        "strip": {
+            "excludes": []
+        },
+        "replaces": [
+            {
+                "what": " ",
+                "to": " ",
+                "excludes": []
+            },
+            {
+                "what": "\n",
+                "to": " ",
+                "includes": []
+            },
+            {
+                "what": "\r",
+                "to": " ",
+                "includes": []
+            }
+        ]
+    },
     "sources": {
+        "categorical_not_groups_cols": [
+            {
+                "name": "contract_type",
+                "using_ref": "ref_contract_types"
+            }
+        ],
         "attributes": {
             "res_groups_ifrs_17": {
                 "columns": [
@@ -83,6 +111,11 @@
             "filename": "constructor_rep_amt.xlsx",
             "constructor_sheet_name": "constructor",
             "header": 2
+        },
+        "pl": {
+            "filename": "constructor_rep_pl_new.xlsx",
+            "constructor_sheet_name": "constructor",
+            "header": 2
         }
     },
     "reports": {
@@ -116,6 +149,39 @@
                     "ref_report_items"
                 ]
             }
+        },
+        "pl": {
+            "report_name": "rep_ifrs17_pl",
+            "group_attributes_source": "res_groups_ifrs_17",
+            "group_amounts_source": "result_amount_gr",
+            "initial_columns": [
+                "calc_id",
+                "inception_year",
+                "report_year",
+                "inception_month",
+                "report_month",
+                "group_id",
+                "portfolio_cd",
+                "contract_type"
+            ],
+            "mart_structure": {
+                "table_name": "rep_ifrs17_pl",
+                "columns": [
+                    "report_date",
+                    "calc_id",
+                    "ifrs_approach_cd",
+                    "group_id",
+                    "portfolio_cd",
+                    "cohort_cd",
+                    "amount_type_cd",
+                    "report_item_name",
+                    "amount_amt"
+                ],
+                "using_constructor": "pl",
+                "using_refs": [
+                    "ref_report_items"
+                ]
+            }
         }
     },
     "refs": {
@@ -130,12 +196,6 @@
             "header": 0,
             "cd_col": "product_cd",
             "name_col": "product_name"
-        },
-        "ref_onerous_type": {
-            "filename": "Справочник типов обременительности.xlsx",
-            "header": 0,
-            "cd_col": "onerous_type_cd",
-            "name_col": "onerous_type_name"
         },
         "ref_report_items": {
             "filename": "Справочник отчетных показателей.xlsx",

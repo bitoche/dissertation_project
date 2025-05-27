@@ -27,8 +27,6 @@ PROJ_PARAM = AppConfig.PROJ_PARAM
 
 pass_errors = False # параметр, влияющий на то будет ли падать модуль от ошибок.
 
-refs_updated = False # указатель, обновлены ли за текущий запуск справочники
-
 calc_statuses = {}
 
 class CalcStatus:
@@ -51,7 +49,7 @@ class CalcStatus:
             "message": self.message
         }
 
-def update_ref(ref_name:str, config: dict, connection):
+def update_ref(ref_name:str, config: dict, connection, general_config: dict = None):
     filename = get_param(None, config, ['filename']) 
     header_size = get_param(None, config, ['header'])
     code_col = get_param(None, config, ['cd_col'])
@@ -75,6 +73,41 @@ def update_ref(ref_name:str, config: dict, connection):
         mf_log.error(_ex)
         raise KeyError(_ex)
     mf_log.info(f'Started upload {ref_name} to "{DB_SCHEMA_REFERENCES}"."{ref_name}"')
+    # чистка значений
+    try:
+        cleanup_params = get_param({}, general_config, ['refs_cleanup_config'])
+        
+        strip_conf = get_param({}, cleanup_params, ['strip'])
+        strip_excludes = get_param([], strip_conf, ['excludes'], False)
+        strip_includes = get_param(None, strip_conf, ['includes'], False)
+        
+        replaces_conf = get_param([], cleanup_params, ['replaces'])
+        if len(replaces_conf)>0:
+            for col in ref_df.columns:
+                coltype = ref_df[col].dtype.name
+                if (coltype == 'string' or coltype == 'object'): # применяется только к str или object(str) столбцам
+                    if ref_df[col].apply(lambda x: isinstance(x, str)).any(): # если в столбце есть хотя бы одно строковое значение
+                        ref_df[col] = ref_df[col].where(ref_df[col].isna(), ref_df[col].astype(str)) # приводим сразу к строковому типу, сохраняя NaN значения
+                        if col not in strip_excludes:
+                            if strip_includes == None or col in strip_includes:
+                                ref_df[col] = (
+                                    ref_df[col]
+                                    .apply(lambda x: str(x).strip() if str(x) != "nan" else x) # strip
+                                )
+                        for replace_conf in replaces_conf:
+                            what = get_param(None, replace_conf, ['what'], False)
+                            to = get_param(None, replace_conf, ['to'], False)
+                            includes = get_param(None, replace_conf, ['includes'], False) # None -- все
+                            excludes = get_param([], replace_conf, ['excludes'], False) # Пустой -- никаких
+                            if col not in excludes:
+                                if includes == None or col in includes:
+                                    ref_df[col] = (
+                                    ref_df[col]
+                                    .apply(lambda x: str(x).replace(str(what), str(to)) if str(x) != "nan" else x) # замены значений
+                                )
+    except:
+        mf_log.error(f'Cant cleanup ref {ref_name}')
+
     ref_df.to_sql(name=ref_name, 
                   con=connection, 
                   schema=DB_SCHEMA_REFERENCES, 
@@ -85,7 +118,6 @@ def update_ref(ref_name:str, config: dict, connection):
 @timer
 def start_calc(item: GeneralInfo):
     try:
-        global refs_updated
         CURRENT_DATETIME = datetime.now()
         CURRENT_DATETIME_STR = CURRENT_DATETIME.strftime("%Y_%m_%d_%H_%M_%S")
         DB_CONNECTION_ROW = get_connection_row()
@@ -134,8 +166,8 @@ def start_calc(item: GeneralInfo):
                 mf_log.info(f'Started update ref {ref_name}')
                 update_ref(ref_name=ref_name, 
                         config=ref_config, 
-                        connection=DB_CONNECTION_ROW)
-            refs_updated = True # справочники обновлены при первом запуске
+                        connection=DB_CONNECTION_ROW,
+                        general_config=reports_config.configuration_data_dict)
         
         percents_remain = 100 - _status.percent
         percents_per_rep = (percents_remain) // len(activated_reports)
@@ -152,15 +184,14 @@ def start_calc(item: GeneralInfo):
             mart_config = get_param(None, rep_config, ['mart_structure'])
 
             
-            # обновление необходимых справочников, если еще не производили
-            if not refs_updated:
-                required_refs: list[str] = get_param([], mart_config, ['using_refs'])
-                rlog.info(f'Started update required refs: {required_refs}')
-                for ref_name in required_refs:
-                    ref_config = get_param(None, refs_configuration, ref_name)
-                    update_ref(ref_name=ref_name, 
-                            config=ref_config, 
-                            connection=DB_CONNECTION_ROW)
+            required_refs: list[str] = get_param([], mart_config, ['using_refs'])
+            rlog.info(f'Started update required refs: {required_refs}')
+            for ref_name in required_refs:
+                ref_config = get_param(None, refs_configuration, ref_name)
+                update_ref(ref_name=ref_name, 
+                        config=ref_config, 
+                        connection=DB_CONNECTION_ROW,
+                        general_config=reports_config.configuration_data_dict)
 
 
             rep_group_results_source_name = get_param(None, rep_config, 'group_amounts_source')
@@ -205,6 +236,7 @@ def start_calc(item: GeneralInfo):
                 list_row_metrics: list[str] = metrics_in_row.split(",")
                 for metric in list_row_metrics:
                     metric = metric.strip()
+                    metric = metric[1:] if metric[0] == '-' else metric
                     try:
                         int(metric)
                         rlog.debug(f'Found number: {metric}')
@@ -214,6 +246,7 @@ def start_calc(item: GeneralInfo):
                     if metric not in unique_used_metrics:
                         rlog.debug(f'Found new param to calc: {metric}')
                         unique_used_metrics.append(metric)
+            rlog.debug(f'UNIQUE USED METRICS FROM CONSTR:\n{unique_used_metrics}')
             # / получение уникальных метрик из конструктора
 
             report_date = sql_variable(rep, SQL_VAR.VARIABLE)(report_date)
@@ -246,9 +279,13 @@ def start_calc(item: GeneralInfo):
                 raise Exception(_ex)
 
             # проверка - заполнены ли все необходимые метрики по группам
+            filled_metrics = list(results_by_groups["amount_type_cd"])
+            rlog.debug(f'FILLED METRICS:\n{filled_metrics}')
             not_filled_metrics: list[str] = []
-            for metric in results_by_groups['amount_type_cd']:
-                if metric not in unique_used_metrics:
+            for metric in unique_used_metrics:
+                rlog.debug(f'checking metric {metric}')
+                if metric not in filled_metrics:
+                    rlog.debug(f'metric {metric} NOT IN RESULTS')
                     not_filled_metrics.append(metric)
             if len(not_filled_metrics) > 0:
                 _nfmetr_text = ''
@@ -323,6 +360,11 @@ def start_calc(item: GeneralInfo):
                             calc_formula_used_params = [p.strip() for p in calc_formula.split(",")]
                             calc_formula_used_params_values = {}
                             for param in calc_formula_used_params:
+                                if param[0] == '-':
+                                    is_negative = True
+                                    param = param[1:]
+                                else:
+                                    is_negative = False
                                 filtered = current_group_results[current_group_results['amount_type_cd']==param][amount_amt_group_results_columns]
                                 if not filtered.empty:
                                     value = filtered.iloc(0)[0]
@@ -334,11 +376,19 @@ def start_calc(item: GeneralInfo):
                                         rlog.error(_ex)
                                     else:
                                         raise Exception(_ex)
-                                calc_formula_used_params_values[param] = float(value)
+                                calc_formula_used_params_values[param] = {}
+                                calc_formula_used_params_values[param]['value'] = float(value)
+                                calc_formula_used_params_values[param]['is_negative'] = is_negative
                                 rlog.debug(f'{param} = {calc_formula_used_params_values[param]}')
                             aggregated_value = 0
-                            for param, param_val in calc_formula_used_params_values.items():
-                                aggregated_value += param_val
+                            for param, param_set in calc_formula_used_params_values.items():
+                                param_negative = param_set['is_negative']
+                                param_value = param_set['value']
+                                match param_negative:
+                                    case False:
+                                        aggregated_value += param_value
+                                    case True:
+                                        aggregated_value -= param_value
                             rlog.debug(f'Aggregated {metr} value = {aggregated_value}')
                             metr_value = aggregated_value
                     else:
@@ -488,6 +538,8 @@ def start_calc(item: GeneralInfo):
                     raise Exception(_ex)
                 else:
                     rlog.info(f'Mart table exists and contain all required cols.')
+                    prepare_data_mart_table_query = prepare_query(prepare_data_mart_table_script, sql_variables[rep])
+                    rlog.info(f'Started prepare-data-mart-table query execute:\n{prepare_data_mart_table_query}')
                     execute_query(prepare_data_mart_table_query, DB_CONNECTION_ROW)
             else:
                 rlog.info('Mart table dont exists.')

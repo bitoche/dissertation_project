@@ -47,6 +47,7 @@ def check_logic_of_configuration(configuration_in_dict: dict = read_configuratio
     configured_ref_names = [ref_n for ref_n, ref_cfg in _cfg['refs'].items()]
     
     for rep_name, rep_cfg in _cfg['reports'].items():
+        categorical_columns_check_flag = False # станет True, если найдется категориальный столбец
         logger.info(f'Started check logic of report "{rep_name}" configuration')
         # используемые в отчетах справочники должны быть описаны в конфигурации справочников
         logger.debug(f'started used refs config check')
@@ -70,16 +71,40 @@ def check_logic_of_configuration(configuration_in_dict: dict = read_configuratio
         full_attr_source_cols = \
             _cfg['sources']['attributes'][rep_attributes_source]['columns'] \
             + [k for k,v in _cfg['sources']['attributes'][rep_attributes_source]['additional_columns'].items()]
+        
+        # чек прописанности категориальных столбцов и их справочников
+        full_categorical_not_groups_cols = [col_desc['name'] for col_desc in _cfg['sources']['categorical_not_groups_cols']]
+
         logger.debug(f'started init cols check')
         for init_rep_col in rep_cfg['initial_columns']:
-            if init_rep_col not in full_attr_source_cols:
-                add_error(f'Report {rep_name} uses init col {init_rep_col}, which not described in attr source {rep_attributes_source} cols: {full_attr_source_cols}','init cols')
+            if init_rep_col in full_attr_source_cols:
+                continue
+            if init_rep_col in full_categorical_not_groups_cols:
+                categorical_columns_check_flag = True
+                continue
+            add_error(f'Report {rep_name} uses init col {init_rep_col}, which not described in attr source {rep_attributes_source} and categorical cols: attrs_cols:{full_attr_source_cols}; categorical_cols:{full_categorical_not_groups_cols}','init cols')
 
         # constructor сконфигурирован
         constr = rep_cfg["mart_structure"]["using_constructor"]
         configured_constructors = [k for k,v in _cfg['constructors'].items()]
         if constr not in configured_constructors:
             add_error(f'Report {rep_name} uses constructor {constr}, which not configured: {configured_constructors}', 'constr')
+
+        # проверка сконфигурированности категориальных негрупповых столбцов, если такие есть
+        if categorical_columns_check_flag:
+            for cat_col_not_gr in full_categorical_not_groups_cols:
+                try:
+                    used_ref = None
+                    for cat_col_cfg in _cfg['sources']['categorical_not_groups_cols']:
+                        if cat_col_cfg['name'] == cat_col_not_gr:
+                            used_ref = cat_col_cfg['using_ref']
+                            break
+                    if used_ref == None:
+                        add_error(f'Report {rep_name} using categorical not gr col {cat_col_not_gr}, which dont described in categorical_not_groups_cols: {full_categorical_not_groups_cols}', 'categorical not gr cols')
+                except Exception as e:
+                    add_error(f'Exception while check categorical_columns: {e}', 'categorical not gr cols')
+                    
+
         
     # выбрасываем ошибку, если не ignore_errors
     result = 'ok' if len(errors) == 0 else 'bad'

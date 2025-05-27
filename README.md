@@ -38,7 +38,8 @@ ReportsModule
     │   └── interface.py
     ├── reports (утилиты для работы с конструктором и скриптами)
     │   ├── excel_parser.py
-    │   └── syntax_parser.py
+    │   ├── syntax_parser.py
+    │   └── formula_parser.py
     └── tests (тесты модуля)
         └── database_tests.py (тесты подключения и входных таблиц БД)
 ```
