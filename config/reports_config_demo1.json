@@ -4,12 +4,13 @@
         "dump_mart_to_file": true
     },
     "activated_reports": [
-        "component_analysis"
+        "cr"
     ],
     "all_reports": [
         "amt",
         "pl",
-        "component_analysis"
+        "component_analysis",
+        "cr"
     ],
     "cols_configuration": {
         "group_id": "str",
@@ -125,6 +126,11 @@
             "filename": "constructor_rep_component_analysis.xlsx",
             "constructor_sheet_name": "constructor",
             "header": 2
+        },
+        "cr": {
+            "filename": "constructor_rep_cr.xlsx",
+            "constructor_sheet_name": "constructor",
+            "header": 2
         }
     },
     "reports": {
@@ -222,6 +228,37 @@
                     "amount_amt"
                 ],
                 "using_constructor": "component_analysis",
+                "using_refs": [
+                    "ref_report_items"
+                ]
+            }
+        },
+        "cr": {
+            "report_name": "rep_ifrs17_cr",
+            "group_attributes_source": "res_groups_ifrs_17",
+            "group_amounts_source": "result_amount_gr",
+            "initial_columns": [
+                "calc_id",
+                "inception_year",
+                "report_year",
+                "inception_month",
+                "report_month",
+                "group_id",
+                "cohort_cd",
+                "portfolio_cd"
+            ],
+            "mart_structure": {
+                "table_name": "rep_ifrs17_cr",
+                "columns": [
+                    "report_date",
+                    "portfolio_cd",
+                    "calc_id",
+                    "group_id",
+                    "cohort_cd",
+                    "report_item_name",
+                    "amount_amt"
+                ],
+                "using_constructor": "cr",
                 "using_refs": [
                     "ref_report_items"
                 ]
