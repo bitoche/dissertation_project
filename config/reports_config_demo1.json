@@ -4,12 +4,12 @@
         "dump_mart_to_file": true
     },
     "activated_reports": [
-        "pl"
+        "component_analysis"
     ],
     "all_reports": [
-        "demo",
         "amt",
-        "pl"
+        "pl",
+        "component_analysis"
     ],
     "cols_configuration": {
         "group_id": "str",
@@ -50,6 +50,10 @@
             {
                 "name": "contract_type",
                 "using_ref": "ref_contract_types"
+            },
+            {
+                "name": "indicator_type",
+                "using_ref": "ref_indicator_type"
             }
         ],
         "attributes": {
@@ -114,6 +118,11 @@
         },
         "pl": {
             "filename": "constructor_rep_pl_new.xlsx",
+            "constructor_sheet_name": "constructor",
+            "header": 2
+        },
+        "component_analysis": {
+            "filename": "constructor_rep_component_analysis.xlsx",
             "constructor_sheet_name": "constructor",
             "header": 2
         }
@@ -182,6 +191,41 @@
                     "ref_report_items"
                 ]
             }
+        },
+        "component_analysis": {
+            "report_name": "rep_ifrs17_component_analysis",
+            "group_attributes_source": "res_groups_ifrs_17",
+            "group_amounts_source": "result_amount_gr",
+            "initial_columns": [
+                "calc_id",
+                "inception_year",
+                "report_year",
+                "inception_month",
+                "report_month",
+                "group_id",
+                "ifrs_approach_cd",
+                "cohort_cd",
+                "portfolio_cd",
+                "indicator_type"
+            ],
+            "mart_structure": {
+                "table_name": "rep_ifrs17_component_analysis",
+                "columns": [
+                    "report_date",
+                    "calc_id",
+                    "ifrs_approach_cd",
+                    "group_id",
+                    "portfolio_cd",
+                    "cohort_cd",
+                    "indicator_type",
+                    "report_item_name",
+                    "amount_amt"
+                ],
+                "using_constructor": "component_analysis",
+                "using_refs": [
+                    "ref_report_items"
+                ]
+            }
         }
     },
     "refs": {
@@ -210,6 +254,12 @@
             "cd_col": "contract_type_cd",
             "name_col": "contract_type_cd",
             "DISABLED_where_condition": "where \"effective_from_dttm\" <= '&actual_date'::date and \"effective_to_dttm\" > '&actual_date'::date"
+        },
+        "ref_indicator_type": {
+            "filename": "Справочник элементов оценки страховых договоров.xlsx",
+            "header": 0,
+            "cd_col": "indicator_type_cd",
+            "name_col": "indicator_type_cd"
         }
     }
 }
