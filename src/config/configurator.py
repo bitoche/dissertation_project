@@ -1,5 +1,5 @@
 import json
-from src.handlers import replace_all
+from src.handlers import replace_all, get_param
 from pathlib import Path
 from config.config import ModuleConfig
 import logging as _logging
@@ -116,6 +116,42 @@ def check_logic_of_configuration(configuration_in_dict: dict = read_configuratio
         logger.info(f'Full check logic report: {text}')
         return result
 
+def find_struct_cols_in_config(rep_name:str, config_dict:dict):
+    try:
+        errors = []
+        returning_dict = {}
+        rep_config = get_param(None, config_dict, ['reports', rep_name])
+        initial_cols = get_param(None, rep_config, ['initial_columns'])
+        results_source = get_param(None, rep_config, ['group_amounts_source'])
+        attrs_source = get_param(None, rep_config, ['group_attributes_source'])
+        all_columns_from_sources = get_param([], config_dict, ['sources', 'amounts', results_source, 'columns']) + \
+            [k for k,v in get_param({}, config_dict, ['sources', 'attributes', attrs_source, 'additional_columns']).items()] + \
+            get_param([], config_dict, ['sources', 'attributes', attrs_source, 'columns'])
+        logger.info(all_columns_from_sources)
+        all_categorical_cols_configs:list[dict] = get_param([], config_dict, ['sources', 'categorical_not_groups_cols'])
+        # ремаппинг - создание ключ-значение по названию столбца
+        cat_col_conf_dict = {}
+        for cat_col_conf in all_categorical_cols_configs:
+            cat_col_name = get_param(None, cat_col_conf, ['name'])
+            cat_col_ref = get_param(None, cat_col_conf, ['using_ref']) 
+            cat_col_conf_dict[cat_col_name] = cat_col_ref
+        for col in initial_cols:
+            if col not in all_columns_from_sources:
+                try:
+                    col_conf = {
+                        "name": col,
+                        "using_ref": cat_col_conf_dict[col]
+                    }
+                    returning_dict[col] = col_conf
+                except:
+                    errors.append(f'not found col {col} config')
+        if len(errors)>0:
+            _ex = '\n'.join(errors)
+            raise Exception(_ex)
+        return returning_dict
+
+    except Exception:
+        raise
 
 class ReportsConfigurationModel():
     def __init__(self, configuration_file_data:dict):

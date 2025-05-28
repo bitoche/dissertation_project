@@ -2,7 +2,7 @@ from src.config.db_connection import get_connection_row, execute_query
 from src.model.interface import GeneralInfo, calc_date_fmts
 from src.handlers import timer, get_param, create_path_if_not_exists, manual_sleep, replace_all
 from config.config import AppConfig, ModuleConfig, DBConfig
-from src.config.configurator import read_configuration_file, ReportsConfigurationModel, check_logic_of_configuration
+from src.config.configurator import read_configuration_file, ReportsConfigurationModel, check_logic_of_configuration, find_struct_cols_in_config
 import logging as _logging
 from .reports.excel_parser import read_constructor, read_ref, RefReadModel
 from .reports.syntax_parser import prepare_query, sql_variables, sql_variable, SQL_VAR
@@ -26,6 +26,7 @@ DB_SCHEMA_SANDBOX = DBConfig.SchemasConfig.DB_SCHEMA_SANDBOX
 PROJ_PARAM = AppConfig.PROJ_PARAM
 
 pass_errors = False # параметр, влияющий на то будет ли падать модуль от ошибок.
+fill_na_with_debug_names = True # NULL значения, полученные при join-е справочников будут заполняться значениями, указываюзщими на отсутствие записи в конкретном справочнике
 
 calc_statuses = {}
 
@@ -311,6 +312,40 @@ def start_calc(item: GeneralInfo):
             select_group_attrs_query = prepare_query(select_group_attrs_script, sql_variables[rep])
             rlog.info(f'Started get group attrs: \n{select_group_attrs_query}')
             group_attrs = pd.read_sql(select_group_attrs_query, con=DB_CONNECTION_ROW)
+
+            # добавление структурообразующих столбцов
+            needed_struct_cols = {}
+            for used_struct_col, struct_col_config in find_struct_cols_in_config(rep, reports_config.configuration_data_dict).items():
+                needed_struct_cols[used_struct_col] = {}
+                used_struct_col:str = used_struct_col
+                used_struct_col_ref_name = get_param(None, struct_col_config, ['using_ref'])
+                _this = used_struct_col_ref_name
+                struct_col_ref_config = get_param(None, refs_configuration, used_struct_col_ref_name)
+                update_ref(ref_name=used_struct_col_ref_name,
+                           config = struct_col_ref_config,
+                           connection=DB_CONNECTION_ROW,
+                           general_config=reports_config.configuration_data_dict)
+                db_schema_ref = sql_variable(_this , SQL_VAR.VARIABLE)(DB_SCHEMA_REFERENCES)
+                actual_date = sql_variable(_this, SQL_VAR.VARIABLE)(actual_date)
+                ref_table_name = sql_variable(_this , SQL_VAR.VARIABLE)(used_struct_col_ref_name)
+                where_condition = get_param(None, struct_col_ref_config, ['where_condition'])
+                condition_to_select = sql_variable(_this, SQL_VAR.FLAG)(True if where_condition != None else False)
+                where_condition_to_select_ref_to_mapping = sql_variable(_this, SQL_VAR.STRUCTURE)(where_condition)
+                ref_cols_to_mapping_list = sql_variable(_this, SQL_VAR.STRUCTURE)(get_param(None,struct_col_ref_config,['cd_col']))
+                select_struct_col_ref_df_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_ref_to_mapping.sql'), 'r').read()
+                select_struct_col_ref_df_query = prepare_query(select_struct_col_ref_df_script, sql_variables[used_struct_col_ref_name])
+                try:
+                    rlog.debug(f'Started execute query to select struct col {used_struct_col} from {_this}:\n{select_struct_col_ref_df_query}')
+                    ref_df = pd.read_sql(sql=select_struct_col_ref_df_query, con=DB_CONNECTION_ROW)
+                except Exception as e:
+                    rlog.error(f'Cant read ref_df to {used_struct_col} with name {_this}.')
+
+                group_attrs = (
+                    group_attrs
+                    .merge(ref_df, how='cross')
+                    .rename(columns={ref_cols_to_mapping_list: used_struct_col})
+                )
+
             rlog.debug(f'group attrs:\n{group_attrs}')
             if len(group_attrs.index) == 0:
                 _ex = f'Recieved group attrs len is 0. Further calculations dont make sense.'
@@ -331,8 +366,9 @@ def start_calc(item: GeneralInfo):
                 .drop(columns=['calc_id'])
             )
             rlog.debug(f'results_for_groups_to_calc:\n{results_for_groups_to_calc}')
-
-            metrics_to_calc_from_constr = constructor_df['metric_name'].drop_duplicates().astype(str) # уникальные названия показателей для расчета
+            
+            raw_metrics_to_calc_from_constr = constructor_df['metric_name'].astype(str).drop_duplicates()
+            metrics_to_calc_from_constr = raw_metrics_to_calc_from_constr.str.strip() # уникальные названия показателей для расчета
 
             metrics_by_groups = {}
             for index, group_row in groups_to_calc.iterrows():
@@ -344,7 +380,7 @@ def start_calc(item: GeneralInfo):
                 rlog.debug(f'current_group_results:\n{current_group_results}')
                 metrics_by_groups[group_id] = {}
                 for metr in  metrics_to_calc_from_constr:
-                    filter_formula = constructor_df[constructor_df['metric_name'] == metr]['filter_formula'].iloc[0]
+                    filter_formula = constructor_df[constructor_df['metric_name'].str.strip() == metr]['filter_formula'].iloc[0]
                     try:
                         rlog.debug(f'started calc formula {filter_formula}')
                         _filter_result:bool = parse_formula(filter_formula, group_with_attrs_df)
@@ -353,7 +389,7 @@ def start_calc(item: GeneralInfo):
                         rlog.error(f'Error while calc formula ({filter_formula}):\n{e}\nIt will be interpreted as {_filter_result}.')
                     rlog.debug(f'calc result is {_filter_result}')
                     if _filter_result:
-                        calc_formula = constructor_df[constructor_df['metric_name'] == metr]['calc_formula'].iloc[0]
+                        calc_formula = constructor_df[constructor_df['metric_name'].str.strip() == metr]['calc_formula'].iloc[0]
                         metr_value = 0
                         if calc_formula != "0" and calc_formula != 0:
                             rlog.debug(f'Calc_formula for "{metr}" from constructor: {calc_formula}')
@@ -393,7 +429,7 @@ def start_calc(item: GeneralInfo):
                             metr_value = aggregated_value
                     else:
                         metr_value = 0
-                    metrics_by_groups[group_id][metr] = metr_value
+                    metrics_by_groups[group_id][metr] = metr_value # strip для корректного маппинга со значениями из справочников
             calculated_metrics_df = (
                 pd.DataFrame.from_dict(metrics_by_groups, orient='index')
                 .reset_index()
@@ -465,7 +501,7 @@ def start_calc(item: GeneralInfo):
             refs = {}
             for ref in required_refs:
                 refs[ref] = {}
-                rlog.debug(f'started get {ref}')
+                rlog.debug(f'started get table: {ref}')
                 ref_table_name = sql_variable(ref, SQL_VAR.VARIABLE)(ref)
                 db_schema_ref = sql_variable(ref, SQL_VAR.VARIABLE)(DB_SCHEMA_REFERENCES)
                 cd_col = get_param(None, refs_configuration, [ref, 'cd_col'])
@@ -490,7 +526,7 @@ def start_calc(item: GeneralInfo):
                 except Exception as e:
                     rlog.exception(e)
                     raise
-                rlog.debug(f'successfully recieved needed table.')
+                rlog.debug(f'successfully recieved needed table: {ref}')
                 refs[ref]['df'] = ref_df
                 refs[ref]['cd_col'] = cd_col
                 refs[ref]['name_col'] = name_col
@@ -507,6 +543,7 @@ def start_calc(item: GeneralInfo):
                         beautiful_mart_df
                         .merge(ref_df, how='left', on=cd_col)
                     )
+                    beautiful_mart_df[name_col] = beautiful_mart_df[name_col].fillna(f'<nd {ref_name}>') if fill_na_with_debug_names else beautiful_mart_df[name_col]
                 except Exception as e:
                     rlog.exception(f'Error! Merge cant be applied to data mart.')
                     raise

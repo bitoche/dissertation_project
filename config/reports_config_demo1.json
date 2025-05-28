@@ -173,7 +173,7 @@
                     "group_id",
                     "portfolio_cd",
                     "cohort_cd",
-                    "amount_type_cd",
+                    "contract_type",
                     "report_item_name",
                     "amount_amt"
                 ],
@@ -203,6 +203,13 @@
             "cd_col": "amount_type_cd",
             "name_col": "report_item_name",
             "where_condition": "where \"effective_from_dttm\" <= '&actual_date'::date and \"effective_to_dttm\" > '&actual_date'::date"
+        },
+        "ref_contract_types": {
+            "filename": "Справочник типов контрактов.xlsx",
+            "header": 0,
+            "cd_col": "contract_type_cd",
+            "name_col": "contract_type_cd",
+            "DISABLED_where_condition": "where \"effective_from_dttm\" <= '&actual_date'::date and \"effective_to_dttm\" > '&actual_date'::date"
         }
     }
 }
