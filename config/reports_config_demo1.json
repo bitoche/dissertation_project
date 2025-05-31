@@ -4,13 +4,14 @@
         "dump_mart_to_file": true
     },
     "activated_reports": [
-        "cr"
+        "liab_analysis"
     ],
     "all_reports": [
         "amt",
         "pl",
         "component_analysis",
-        "cr"
+        "cr",
+        "liab_analysis"
     ],
     "cols_configuration": {
         "group_id": "str",
@@ -55,6 +56,10 @@
             {
                 "name": "indicator_type",
                 "using_ref": "ref_indicator_type"
+            },
+            {
+                "name": "loss_component",
+                "using_ref": "ref_loss_component"
             }
         ],
         "attributes": {
@@ -131,6 +136,11 @@
             "filename": "constructor_rep_cr.xlsx",
             "constructor_sheet_name": "constructor",
             "header": 2
+        },
+        "liab_analysis": {
+            "filename": "constructor_rep_liab_analysis.xlsx",
+            "constructor_sheet_name": "constructor",
+            "header": 2
         }
     },
     "reports": {
@@ -152,7 +162,7 @@
                 "columns": [
                     "report_date",
                     "calc_id",
-                    "ifrs_approach_cd",
+                    "ifrs_approach_name",
                     "group_id",
                     "portfolio_cd",
                     "cohort_cd",
@@ -161,7 +171,8 @@
                 ],
                 "using_constructor": "amt",
                 "using_refs": [
-                    "ref_report_items"
+                    "ref_report_items",
+                    "ref_approach"
                 ]
             }
         },
@@ -184,7 +195,7 @@
                 "columns": [
                     "report_date",
                     "calc_id",
-                    "ifrs_approach_cd",
+                    "ifrs_approach_name",
                     "group_id",
                     "portfolio_cd",
                     "cohort_cd",
@@ -194,7 +205,8 @@
                 ],
                 "using_constructor": "pl",
                 "using_refs": [
-                    "ref_report_items"
+                    "ref_report_items",
+                    "ref_approach"
                 ]
             }
         },
@@ -219,7 +231,7 @@
                 "columns": [
                     "report_date",
                     "calc_id",
-                    "ifrs_approach_cd",
+                    "ifrs_approach_name",
                     "group_id",
                     "portfolio_cd",
                     "cohort_cd",
@@ -229,7 +241,8 @@
                 ],
                 "using_constructor": "component_analysis",
                 "using_refs": [
-                    "ref_report_items"
+                    "ref_report_items",
+                    "ref_approach"
                 ]
             }
         },
@@ -263,6 +276,43 @@
                     "ref_report_items"
                 ]
             }
+        },
+        "liab_analysis": {
+            "report_name": "rep_ifrs17_liab_analysis",
+            "group_attributes_source": "res_groups_ifrs_17",
+            "group_amounts_source": "result_amount_gr",
+            "initial_columns": [
+                "calc_id",
+                "inception_year",
+                "report_year",
+                "inception_month",
+                "report_month",
+                "group_id",
+                "ifrs_approach_cd",
+                "portfolio_cd",
+                "indicator_type",
+                "loss_component"
+            ],
+            "mart_structure": {
+                "table_name": "rep_ifrs17_liab_analysis",
+                "columns": [
+                    "report_date",
+                    "calc_id",
+                    "group_id",
+                    "portfolio_cd",
+                    "cohort_cd",
+                    "ifrs_approach_name",
+                    "indicator_type",
+                    "loss_component",
+                    "report_item_name",
+                    "amount_amt"
+                ],
+                "using_constructor": "liab_analysis",
+                "using_refs": [
+                    "ref_report_items",
+                    "ref_approach"
+                ]
+            }
         }
     },
     "refs": {
@@ -283,7 +333,7 @@
             "header": 0,
             "cd_col": "amount_type_cd",
             "name_col": "report_item_name",
-            "where_condition": "where \"effective_from_dttm\" <= '&actual_date'::date and \"effective_to_dttm\" > '&actual_date'::date"
+            "where_condition": "where \"effective_from_dttm\" <= '&actual_date'::date and \"effective_to_dttm\" > '&actual_date'::date and \"report\" = '&report_name'"
         },
         "ref_contract_types": {
             "filename": "Справочник типов контрактов.xlsx",
@@ -297,6 +347,18 @@
             "header": 0,
             "cd_col": "indicator_type_cd",
             "name_col": "indicator_type_cd"
+        },
+        "ref_approach": {
+            "filename": "Справочник методов оценки обязательств по МСФО17.xlsx",
+            "header": 0,
+            "cd_col": "ifrs_approach_cd",
+            "name_col": "ifrs_approach_name"
+        },
+        "ref_loss_component": {
+            "filename": "Справочник компонентов потерь МСФО17.xlsx",
+            "header": 0,
+            "cd_col": "loss_component_cd",
+            "name_col": "loss_component_cd"
         }
     }
 }

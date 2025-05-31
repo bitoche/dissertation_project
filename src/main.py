@@ -116,9 +116,24 @@ def update_ref(ref_name:str, config: dict, connection, general_config: dict = No
                   if_exists='replace')
     
 
+# временное сохранение полученной mart в output_files
+def save_df_to_excel(path: Path, df: pd.DataFrame, sheet_name: str):
+    mf_log.info(f'Saving {sheet_name}: {path}')
+    # существует ли файл
+    if path.exists():
+        # добавляем данные в существующий файл
+        with pd.ExcelWriter(path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+    else:
+        # создаём новый
+        with pd.ExcelWriter(path, mode='w', engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+
 @timer
 def start_calc(item: GeneralInfo):
     try:
+        IS_DEBUG = True if mf_log.getEffectiveLevel() <= 10 else False 
+        mf_log.info(f"IS_DEBUG={IS_DEBUG}, effective log level={mf_log.getEffectiveLevel()}")
         CURRENT_DATETIME = datetime.now()
         CURRENT_DATETIME_STR = CURRENT_DATETIME.strftime("%Y_%m_%d_%H_%M_%S")
         DB_CONNECTION_ROW = get_connection_row()
@@ -173,7 +188,8 @@ def start_calc(item: GeneralInfo):
         percents_remain = 100 - _status.percent
         percents_per_rep = (percents_remain) // len(activated_reports)
         for rep in activated_reports:
-            
+            OUTPUT_FILE_PATH = f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx'
+
             rlog = mf_log.getChild(rep)
             rlog.info(f"Started report {rep}")
 
@@ -229,7 +245,8 @@ def start_calc(item: GeneralInfo):
             constructor_config = get_param(None, reports_config.configuration_data_dict, ['constructors', rep_using_constructor])
             constructor_df = read_constructor(constructor_config)
             rlog.debug(f'constructor:\n{constructor_df}')
-            
+
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), constructor_df, 'constructor') if IS_DEBUG else None
             # получение уникальных метрик из конструктора
             calc_formula_constructor_col = constructor_df['calc_formula'].astype(str) # столбец с указанием из каких показателей состоит показатель
             unique_used_metrics:list[str] = []
@@ -313,6 +330,8 @@ def start_calc(item: GeneralInfo):
             rlog.info(f'Started get group attrs: \n{select_group_attrs_query}')
             group_attrs = pd.read_sql(select_group_attrs_query, con=DB_CONNECTION_ROW)
 
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), group_attrs, 'group_attrs')
+
             # добавление структурообразующих столбцов
             needed_struct_cols = {}
             for used_struct_col, struct_col_config in find_struct_cols_in_config(rep, reports_config.configuration_data_dict).items():
@@ -345,6 +364,7 @@ def start_calc(item: GeneralInfo):
                     .merge(ref_df, how='cross')
                     .rename(columns={ref_cols_to_mapping_list: used_struct_col})
                 )
+                save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), group_attrs, f'gr_attrs_{used_struct_col}_mgd') if IS_DEBUG else None
 
             rlog.debug(f'group attrs:\n{group_attrs}')
             if len(group_attrs.index) == 0:
@@ -357,16 +377,28 @@ def start_calc(item: GeneralInfo):
                 .drop(columns=['calc_id'])
             )
             rlog.debug(f'groups_to_calc:\n{groups_to_calc}')
-
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), groups_to_calc, f'grs_to_calc') if IS_DEBUG else None
             amount_amt_group_results_columns = get_param(None, group_results_source_config, 'amount_columns')
             primary_key_group_results_columns = get_param(None, group_results_source_config, 'primary_key_columns')
             results_for_groups_to_calc = results_by_groups[primary_key_group_results_columns + amount_amt_group_results_columns]
             results_for_groups_to_calc = (
                 results_for_groups_to_calc[results_for_groups_to_calc['calc_id'] == calc_id]
-                .drop(columns=['calc_id'])
             )
             rlog.debug(f'results_for_groups_to_calc:\n{results_for_groups_to_calc}')
-            
+
+            # если есть дубликаты по primary столбцам, дальше не считаем
+            duplicates_res = results_for_groups_to_calc[results_for_groups_to_calc.duplicated(subset=primary_key_group_results_columns, keep=False)]
+            if not duplicates_res.empty:
+                _ex = f"Found duplicated strings in group results primary cols ({primary_key_group_results_columns}). Check yr calc_id."
+                rlog.error(_ex+ f":\n{duplicates_res}")
+                raise Exception(_ex)
+            else:
+                pass
+            results_for_groups_to_calc = (
+                results_for_groups_to_calc
+                .drop(columns=['calc_id'])
+            )
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), results_for_groups_to_calc, f'ress_for_calc')
             raw_metrics_to_calc_from_constr = constructor_df['metric_name'].astype(str).drop_duplicates()
             metrics_to_calc_from_constr = raw_metrics_to_calc_from_constr.str.strip() # уникальные названия показателей для расчета
 
@@ -435,6 +467,7 @@ def start_calc(item: GeneralInfo):
                 .reset_index()
                 .rename(columns={'index': 'group_id'})
                 )
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), calculated_metrics_df, f'calculated_metrics_df') if IS_DEBUG else None
             calculated_metrics_df = (
                 calculated_metrics_df
                 .melt(id_vars=['group_id'],
@@ -444,6 +477,7 @@ def start_calc(item: GeneralInfo):
                     )
             )
             rlog.debug(f'calculated metrics:\n{calculated_metrics_df}')
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), calculated_metrics_df, f'calculated_metrics_melted') if IS_DEBUG else None
             
             # сборка итогового dataframe со всеми необходимыми столбцами
             
@@ -460,8 +494,7 @@ def start_calc(item: GeneralInfo):
             rlog.info(f'mart:\n{mart_df}')
 
             # временное сохранение полученной mart в output_files
-            with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx')) as writer:
-                mart_df.to_excel(writer, sheet_name=f"temp_mart")
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), mart_df, 'temp_mart') if IS_DEBUG else None
             
             # подготовка таблицы под витрину
             data_mart_name = sql_variable(rep, SQL_VAR.VARIABLE)(get_param(None, mart_config, 'table_name'))
@@ -503,6 +536,7 @@ def start_calc(item: GeneralInfo):
                 refs[ref] = {}
                 rlog.debug(f'started get table: {ref}')
                 ref_table_name = sql_variable(ref, SQL_VAR.VARIABLE)(ref)
+                report_name = sql_variable(ref, SQL_VAR.VARIABLE)(rep)
                 db_schema_ref = sql_variable(ref, SQL_VAR.VARIABLE)(DB_SCHEMA_REFERENCES)
                 cd_col = get_param(None, refs_configuration, [ref, 'cd_col'])
                 name_col = get_param(None, refs_configuration, [ref, 'name_col'])
@@ -514,8 +548,7 @@ def start_calc(item: GeneralInfo):
 
                 actual_date = sql_variable(ref, SQL_VAR.VARIABLE)(actual_date)
 
-                if condition_to_select:
-                    where_condition_to_select_ref_to_mapping = sql_variable(ref, SQL_VAR.STRUCTURE)(make_where_cond)
+                where_condition_to_select_ref_to_mapping = sql_variable(ref, SQL_VAR.STRUCTURE)(make_where_cond)
 
                 select_ref_df_script = open(Path(MODULE_SCRIPTS_PATH, 'subqueries', 'select_ref_to_mapping.sql'), 'r').read()
                 rlog.info(f'started prepare query to select {ref}')
@@ -548,8 +581,7 @@ def start_calc(item: GeneralInfo):
                     rlog.exception(f'Error! Merge cant be applied to data mart.')
                     raise
             # временное сохранение полученной mart в output_files
-            with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx'), mode='a') as writer:
-                beautiful_mart_df.to_excel(writer, sheet_name=f"fully_merged_mart")
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), beautiful_mart_df, 'fully_merged_mart') if IS_DEBUG else None
             rlog.info(f'Started construct result mart {rep}')
             try:
                 beautiful_mart_df = beautiful_mart_df[cols_to_be_in_mart]
@@ -559,9 +591,8 @@ def start_calc(item: GeneralInfo):
             rlog.debug(f'successful constructed result mart:\n{beautiful_mart_df}')
             
             # временное сохранение полученной mart в output_files
-            with pd.ExcelWriter(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), f'{rep}__CALC_ID_{calc_id}__REP_DATE_{report_date}__CDTTM_{CURRENT_DATETIME_STR}.xlsx'), mode='a') as writer:
-                beautiful_mart_df.to_excel(writer, sheet_name=f"result_mart")
-            
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), beautiful_mart_df, 'result_mart')
+
             prepare_data_mart_table_script = open(Path(MODULE_SCRIPTS_PATH, 'prepare_data_mart_table.sql'),'r').read()
         
             rlog.info(f'Started data mart {data_mart_name} tests')
