@@ -30,7 +30,7 @@ _tags = [
 
 app = FastAPI(title="IFRS17 Reports Service API",
               version=VERSIONS.API,
-              root_path="/python/api",
+              root_path=f"/python/api/{VERSIONS.API}",
               openapi_tags=_tags,
               description=VERSIONS.API_COMMENT)
 
@@ -62,7 +62,7 @@ async def get_status(calc_id: int):
             return {"status": "in_progress"}
     return {"status": "not_found"}
 
-@app.post(f"/{VERSIONS.CALCULATOR}/startCalc", tags=['calculation'])
+@app.post(f"/startCalc/{VERSIONS.CALCULATOR}", tags=['calculation'])
 async def start_calculation(item: GeneralInfo):
     check_res = item.is_valid()
     if check_res[0] == 'good':
@@ -86,7 +86,7 @@ class SUPPORTED_FILE_TYPE(Enum):
     REF = 'ref'
     CONSTR = 'constr'
 
-@app.post(f"/{VERSIONS.API}/upload_file")
+@app.post(f"/upload_file")
 async def upload_file(
     file: UploadFile = File(...),
     file_type: SUPPORTED_FILE_TYPE = Form(...),
@@ -95,40 +95,51 @@ async def upload_file(
     try:
         meta_info, dataframes = await crud.save_file_with_meta(file, file_type.value, file_desc)
 
+        file_path = Path(meta_info.filename)
+
         # Валидация содержимого
         if file_type == SUPPORTED_FILE_TYPE.CONF:
-            file_path = Path(meta_info.filename)
+            app_log.info(f"Started validation for loaded configuration: {meta_info.filename}")
             with open(file_path, "r") as f:
                 config_data = json.load(f)
-            validation_result = check_logic_of_configuration(config_data, ignore_errors=True)
-            if validation_result == 'bad':
-                # Помечаем файл как неактивный и сохраняем мета-информацию
-                meta_info.is_active = False
-                crud_instance = JSONCrud()
-                crud_instance.update(meta_info.id, meta_info)  # Перезаписываем с is_active=False
-                # Удаляем файл из хранилища
-                try:
-                    file_path.unlink()
-                    app_log.info(f"Deleted invalid configuration file: {file_path}")
-                except Exception as e:
-                    app_log.error(f"Failed to delete invalid configuration file {file_path}: {e}")
-                # Формируем ответ с информацией об ошибке
-                errors = []  # check_logic_of_configuration не возвращает список ошибок, поэтому заглушка
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid configuration: validation failed. Meta info saved with is_active=False. Errors: {errors}"
-                )
+            validated = True if check_logic_of_configuration(config_data, ignore_errors=True)=='ok' else False
+        elif file_type == SUPPORTED_FILE_TYPE.CONSTR:
+            app_log.info(f"Started validation for loaded constructor: {meta_info.filename}")
+            validated = False
+            # легкая валидация на основе названий листов
+            if "constructor" in dataframes.keys():
+                validated = True
         else:
-            # Заглушка для валидации ref и constr
-            app_log.info(f"Validation for {file_type} is not implemented yet")
-
-        response = {
-            "status": "success",
-            "meta_info": meta_info.to_dict(),
-        }
+            app_log.info(f"Started validation for loaded ref: {meta_info.filename}")
+            validated = False
+            # легкая валидация на основе названий листов
+            if "ref" in dataframes.keys():
+                validated = True
+        if validated:
+            response = {
+                "status": "success",
+                "message": "validated",
+                "saved_meta": meta_info.to_dict(),
+            }
+        else:
+            # Помечаем файл как неактивный и сохраняем мета-информацию
+            meta_info.is_active = False
+            crud_instance = JSONCrud()
+            crud_instance.update(meta_info.id, meta_info)  # Перезаписываем с is_active=False
+            # Удаляем файл из хранилища
+            try:
+                file_path.unlink()
+                app_log.info(f"Deleted invalid file: {file_path}")
+            except Exception as e:
+                app_log.error(f"Failed to delete invalid file {file_path}: {e}")
+            response = {
+                "status": "error",
+                "message": "not validated",
+                "saved_meta": meta_info.to_dict()
+            }
         
         if dataframes:
-            response["sheets"] = {sheet: df.columns.tolist() for sheet, df in dataframes.items()}
+            response["sheets_with_columns"] = {sheet: df.columns.tolist() for sheet, df in dataframes.items()}
         
         return JSONResponse(content=response)
     
@@ -136,7 +147,7 @@ async def upload_file(
         app_log.error(f"Error uploading file: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post(f"/{VERSIONS.API}/get_all_uploads")
+@app.post(f"/get_all_uploads")
 async def get_all_meta(
     file_type: SUPPORTED_FILE_TYPE
 ):
@@ -144,13 +155,12 @@ async def get_all_meta(
         crud = JSONCrud()
         all_info = crud.get_all()
         response = [item.to_dict() for item in all_info if item.file_type == file_type.value]
-
         return JSONResponse(content=response)
     except Exception as e:
         app_log.error(f'Error get_all_uploads: {str(e)}')
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post(f"/{VERSIONS.API}/get_upload_by_id")
+@app.post(f"/get_upload_by_id")
 async def get_meta_by_id(
     upload_id: int
 ):
@@ -158,7 +168,10 @@ async def get_meta_by_id(
         crud = JSONCrud()
         response = crud.get_by_id(upload_id)
         if response != None:
-            response = response.to_dict()
+            meta = response.to_dict()
+            response = {} 
+            response["status"] = "successful"
+            response["meta"] = meta
         else:
             response = {
                 "status": "not found", 
