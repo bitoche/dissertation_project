@@ -137,11 +137,12 @@ class JSONCrud:
         logger.info(f'Started get by id = {item_id} from json')
         with open(self.filename, "r") as f:
             data = json.load(f)
-        
         for item in data:
             if item["id"] == item_id and item.get("is_active", True):
                 return MetaFileInfo.from_dict(item)
-        raise ValueError(f"Item with id {item_id} not found or inactive")
+        logger.warning(f"Item with id {item_id} not found or inactive")
+        return None
+        # raise ValueError(f"Item with id {item_id} not found or inactive")
 
     def update(self, item_id: int, updated_item: MetaFileInfo) -> MetaFileInfo:
         """Обновляет объект по его id."""

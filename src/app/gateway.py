@@ -86,7 +86,7 @@ class SUPPORTED_FILE_TYPE(Enum):
     REF = 'ref'
     CONSTR = 'constr'
 
-@app.post("/upload_file")
+@app.post(f"/{VERSIONS.API}/upload_file")
 async def upload_file(
     file: UploadFile = File(...),
     file_type: SUPPORTED_FILE_TYPE = Form(...),
@@ -134,4 +134,37 @@ async def upload_file(
     
     except Exception as e:
         app_log.error(f"Error uploading file: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post(f"/{VERSIONS.API}/get_all_uploads")
+async def get_all_meta(
+    file_type: SUPPORTED_FILE_TYPE
+):
+    try:
+        crud = JSONCrud()
+        all_info = crud.get_all()
+        response = [item.to_dict() for item in all_info if item.file_type == file_type.value]
+
+        return JSONResponse(content=response)
+    except Exception as e:
+        app_log.error(f'Error get_all_uploads: {str(e)}')
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post(f"/{VERSIONS.API}/get_upload_by_id")
+async def get_meta_by_id(
+    upload_id: int
+):
+    try:
+        crud = JSONCrud()
+        response = crud.get_by_id(upload_id)
+        if response != None:
+            response = response.to_dict()
+        else:
+            response = {
+                "status": "not found", 
+                "message":f"Meta of file with upload_id={upload_id} not found in file"
+                }
+        return JSONResponse(content=response)
+    except Exception as e:
+        app_log.error(f'Error get_upload_by_id: {str(e)}')
         raise HTTPException(status_code=500, detail=str(e))
