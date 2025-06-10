@@ -25,12 +25,16 @@ _tags = [
     },
     {
         "name": "api"
+    },
+    {
+        "name": "file_manager",
+        "description": "upload, inspect, delete files from module storage"
     }
 ]
 
 app = FastAPI(title="IFRS17 Reports Service API",
               version=VERSIONS.API,
-              root_path=f"/python/api/{VERSIONS.API}",
+              root_path=f"/python/api",
               openapi_tags=_tags,
               description=VERSIONS.API_COMMENT)
 
@@ -86,7 +90,7 @@ class SUPPORTED_FILE_TYPE(Enum):
     REF = 'ref'
     CONSTR = 'constr'
 
-@app.post(f"/upload_file")
+@app.post(f"/upload_file", tags=['file_manager'])
 async def upload_file(
     file: UploadFile = File(...),
     file_type: SUPPORTED_FILE_TYPE = Form(...),
@@ -147,7 +151,7 @@ async def upload_file(
         app_log.error(f"Error uploading file: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post(f"/get_all_uploads")
+@app.get(f"/get_all_uploads", tags=['file_manager'])
 async def get_all_meta(
     file_type: SUPPORTED_FILE_TYPE
 ):
@@ -160,7 +164,7 @@ async def get_all_meta(
         app_log.error(f'Error get_all_uploads: {str(e)}')
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post(f"/get_upload_by_id")
+@app.get("/get_upload_by_id/{upload_id}", tags=['file_manager'])
 async def get_meta_by_id(
     upload_id: int
 ):
@@ -180,4 +184,33 @@ async def get_meta_by_id(
         return JSONResponse(content=response)
     except Exception as e:
         app_log.error(f'Error get_upload_by_id: {str(e)}')
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/drop_file_by_id", tags=['file_manager'])
+async def drop_uploaded_file_by_id(
+    file_upload_id: int
+):
+    try:
+        crud = JSONCrud()
+        
+        deleted = crud.delete(file_upload_id)
+        
+        response = {}
+        if deleted != None:
+            response["status"] = "successful"
+            response["meta"] = deleted.to_dict()
+            # Удаляем файл из хранилища
+            try:
+                file_path = Path(deleted.filename)
+                file_path.unlink()
+                app_log.info(f"Deleted valid uploaded file: {file_path}")
+            except Exception as e:
+                response["message"] = f"WARNING! FILE NOT DELETED BY ERROR! CHECK LOGS FOR MORE INFO."
+                app_log.error(f"Failed to delete valid uploaded file {file_path}: {e}")
+        else:
+            response["status"] = "error"
+            response["message"] = f"Not found file_upload_id={file_upload_id} in file"
+        return JSONResponse(content=response)
+    except Exception as e:
+        app_log.error(f'Error drop_file_by_id: {str(e)}')
         raise HTTPException(status_code=500, detail=str(e))

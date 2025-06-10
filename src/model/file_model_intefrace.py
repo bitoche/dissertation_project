@@ -176,7 +176,8 @@ class JSONCrud:
                 with open(self.filename, "w") as f:
                     json.dump(data, f, indent=4)
                 return MetaFileInfo.from_dict(item)
-        raise ValueError(f"Item with id {item_id} not found")
+        return None
+        # raise ValueError(f"Item with id {item_id} not found")
     
     def get_next_file_id(self) -> int:
         """Возвращает следующий доступный уникальный id на основе максимального id в JSON."""
