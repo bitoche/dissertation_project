@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
+from fastapi.responses import JSONResponse
 from config.config import VERSIONS
 from config.log_config import setup_logging
 from src.model.interface import GeneralInfo
 from src.main import start_calc, get_calc_status
 from src.tests.database_tests import check_connection_status
+from src.model.file_model_intefrace import JSONCrud, MetaFileInfo
+from src.config.configurator import check_logic_of_configuration
 import logging
 import asyncio
 
@@ -12,7 +15,8 @@ setup_logging()
 print("Starting gateway.py module import")  # Отладочное сообщение
 
 app_log = logging.getLogger('app')
-# app_log.info('---------------------- Gateway module loaded ----------------------')
+
+crud = JSONCrud()
 
 _tags = [
     {
@@ -73,3 +77,61 @@ async def start_calculation(item: GeneralInfo):
     else:
         return check_res[1]
 
+from pathlib import Path 
+import json
+from enum import Enum
+
+class SUPPORTED_FILE_TYPE(Enum):
+    CONF = 'conf'
+    REF = 'ref'
+    CONSTR = 'constr'
+
+@app.post("/upload_file")
+async def upload_file(
+    file: UploadFile = File(...),
+    file_type: SUPPORTED_FILE_TYPE = Form(...),
+    file_desc: str = Form(...)
+):
+    try:
+        meta_info, dataframes = await crud.save_file_with_meta(file, file_type.value, file_desc)
+
+        # Валидация содержимого
+        if file_type == SUPPORTED_FILE_TYPE.CONF:
+            file_path = Path(meta_info.filename)
+            with open(file_path, "r") as f:
+                config_data = json.load(f)
+            validation_result = check_logic_of_configuration(config_data, ignore_errors=True)
+            if validation_result == 'bad':
+                # Помечаем файл как неактивный и сохраняем мета-информацию
+                meta_info.is_active = False
+                crud_instance = JSONCrud()
+                crud_instance.update(meta_info.id, meta_info)  # Перезаписываем с is_active=False
+                # Удаляем файл из хранилища
+                try:
+                    file_path.unlink()
+                    app_log.info(f"Deleted invalid configuration file: {file_path}")
+                except Exception as e:
+                    app_log.error(f"Failed to delete invalid configuration file {file_path}: {e}")
+                # Формируем ответ с информацией об ошибке
+                errors = []  # check_logic_of_configuration не возвращает список ошибок, поэтому заглушка
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid configuration: validation failed. Meta info saved with is_active=False. Errors: {errors}"
+                )
+        else:
+            # Заглушка для валидации ref и constr
+            app_log.info(f"Validation for {file_type} is not implemented yet")
+
+        response = {
+            "status": "success",
+            "meta_info": meta_info.to_dict(),
+        }
+        
+        if dataframes:
+            response["sheets"] = {sheet: df.columns.tolist() for sheet, df in dataframes.items()}
+        
+        return JSONResponse(content=response)
+    
+    except Exception as e:
+        app_log.error(f"Error uploading file: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

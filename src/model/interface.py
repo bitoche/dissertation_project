@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from datetime import datetime
 import logging as _logging
+from fastapi import UploadFile
+from .file_model_intefrace import *
+from src.config.configurator import check_logic_of_configuration
+from .file_model_intefrace import MetaFileInfo
 logger = _logging.getLogger("app").getChild("validator")
 
 calc_date_fmts = {}
@@ -54,3 +58,7 @@ class GeneralInfo(BaseModel):
             return 'bad', errors
         return 'good', []
 
+
+class StartReportItem(GeneralInfo):
+    json_configuration_id: int
+    reports_to_calc: list[str] # список отчетов, которые надо рассчитать, должна быть определены в конфигурации. например ["ABC", "XYZ"]

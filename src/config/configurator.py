@@ -22,7 +22,7 @@ def read_configuration_file(proj_param:str):
         raise e
     return configuration_file_data
 
-def check_logic_of_configuration(configuration_in_dict: dict = read_configuration_file('demo1'), ignore_errors: bool = False):
+def check_logic_of_configuration(configuration_in_dict: dict, ignore_errors: bool = False):
     """
     Выводит отчет о логических ошибках в конфигурации JSON модуля (`reports_config_<proj_param>.json`). Возвращает 'ok', если ошибок нет, и 'bad' если найдены ошибки.
 
@@ -41,11 +41,38 @@ def check_logic_of_configuration(configuration_in_dict: dict = read_configuratio
         er_mes = message,
         logger.error(er_mes)
         errors.append({'message': message, 'by_check': by_check})
+    
+    def return_result():
+        result = 'ok' if len(errors) == 0 else 'bad'
+        text = '\n'.join([f'{i+1}. By check {dict_error["by_check"]} error: {dict_error["message"]}' for i, dict_error in enumerate(errors)]) if result != 'ok' else 'All ok.'
+        if not ignore_errors and result == 'bad':
+            logger.exception(f'Error message: \n{text}')
+            raise Exception(f'Error message: \n{text}')
+        else:
+            logger.info(f'Full check logic report: {text}')
+            return result
 
     _cfg = configuration_in_dict
 
-    configured_ref_names = [ref_n for ref_n, ref_cfg in _cfg['refs'].items()]
-    
+    if not isinstance(configuration_in_dict, dict):
+        add_error("Configuration must be a dictionary", "GENERAL")
+        return return_result()
+
+    refs: dict = get_param({}, _cfg, 'refs')
+    if not isinstance(refs, dict):
+        add_error("Refs must be a dictionary", "refs")
+        return return_result()
+
+    configured_ref_names = [ref_n for ref_n, ref_cfg in refs.items()]
+
+    reports:dict = get_param({}, _cfg, 'reports')
+    if not isinstance(reports, dict):
+        add_error("Reports must be a dictionary", "rep")
+        return return_result()
+    if len(reports.keys()) == 0:
+        add_error('Not configured reports in configuration', 'rep')
+        return_result()
+
     for rep_name, rep_cfg in _cfg['reports'].items():
         categorical_columns_check_flag = False # станет True, если найдется категориальный столбец
         logger.info(f'Started check logic of report "{rep_name}" configuration')

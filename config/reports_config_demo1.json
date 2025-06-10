@@ -90,10 +90,7 @@
                     "inception_month": "EXTRACT(MONTH FROM inception_dt)",
                     "report_year": "EXTRACT(YEAR FROM '&dt_report_date'::date)",
                     "report_month": "EXTRACT(MONTH FROM '&dt_report_date'::date)"
-                },
-                "using_variables": [
-                    "dt_report_date"
-                ]
+                }
             }
         },
         "amounts": {

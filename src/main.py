@@ -247,25 +247,6 @@ def start_calc(item: GeneralInfo):
             rlog.debug(f'constructor:\n{constructor_df}')
 
             save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), constructor_df, 'constructor') if IS_DEBUG else None
-            # получение уникальных метрик из конструктора
-            calc_formula_constructor_col = constructor_df['calc_formula'].astype(str) # столбец с указанием из каких показателей состоит показатель
-            unique_used_metrics:list[str] = []
-            for metrics_in_row in calc_formula_constructor_col:
-                list_row_metrics: list[str] = metrics_in_row.split(",")
-                for metric in list_row_metrics:
-                    metric = metric.strip()
-                    metric = metric[1:] if metric[0] == '-' else metric
-                    try:
-                        int(metric)
-                        rlog.debug(f'Found number: {metric}')
-                        continue
-                    except:
-                        pass
-                    if metric not in unique_used_metrics:
-                        rlog.debug(f'Found new param to calc: {metric}')
-                        unique_used_metrics.append(metric)
-            rlog.debug(f'UNIQUE USED METRICS FROM CONSTR:\n{unique_used_metrics}')
-            # / получение уникальных метрик из конструктора
 
             report_date = sql_variable(rep, SQL_VAR.VARIABLE)(report_date)
             prev_report_date = sql_variable(rep, SQL_VAR.VARIABLE)(prev_report_date)
@@ -288,13 +269,35 @@ def start_calc(item: GeneralInfo):
             # преобразование в str для query
             group_results_cols_list = ", ".join(group_results_cols_list) if len(group_results_cols_list) > 0 else 'NOT FOUND COLS' # достижимо, если в конфигурации источника не указано ни одной колонки
             group_results_cols_list = sql_variable(rep, SQL_VAR.STRUCTURE)(group_results_cols_list)
+
             select_group_results_query = prepare_query(select_group_results_script, sql_variables[rep])
+            
             rlog.info(f'Started get group results: \n{select_group_results_query}')
             results_by_groups = pd.read_sql(select_group_results_query, con=DB_CONNECTION_ROW)
             rlog.debug(f'results by groups:\n{results_by_groups}')
             if len(results_by_groups.index) == 0:
                 _ex = f'Recieved results by groups len is 0. Further calculations dont make sense.'
                 raise Exception(_ex)
+
+            # получение уникальных метрик из конструктора
+            calc_formula_constructor_col = constructor_df['calc_formula'].astype(str) # столбец с указанием из каких показателей состоит показатель
+            unique_used_metrics:list[str] = []
+            for metrics_in_row in calc_formula_constructor_col:
+                list_row_metrics: list[str] = metrics_in_row.split(",")
+                for metric in list_row_metrics:
+                    metric = metric.strip()
+                    metric = metric[1:] if metric[0] == '-' else metric
+                    try:
+                        int(metric)
+                        rlog.debug(f'Found number: {metric}')
+                        continue
+                    except:
+                        pass
+                    if metric not in unique_used_metrics:
+                        rlog.debug(f'Found new param to calc: {metric}')
+                        unique_used_metrics.append(metric)
+            rlog.debug(f'UNIQUE USED METRICS FROM CONSTR:\n{unique_used_metrics}')
+            # / получение уникальных метрик из конструктора
 
             # проверка - заполнены ли все необходимые метрики по группам
             filled_metrics = list(results_by_groups["amount_type_cd"])
@@ -329,6 +332,7 @@ def start_calc(item: GeneralInfo):
             select_group_attrs_query = prepare_query(select_group_attrs_script, sql_variables[rep])
             rlog.info(f'Started get group attrs: \n{select_group_attrs_query}')
             group_attrs = pd.read_sql(select_group_attrs_query, con=DB_CONNECTION_ROW)
+            recieved_group_attrs = group_attrs.copy()
 
             save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH, PROJ_PARAM, rep)), OUTPUT_FILE_PATH), group_attrs, 'group_attrs')
 
@@ -461,7 +465,7 @@ def start_calc(item: GeneralInfo):
                             metr_value = aggregated_value
                     else:
                         metr_value = 0
-                    metrics_by_groups[group_id][metr] = metr_value # strip для корректного маппинга со значениями из справочников
+                    metrics_by_groups[group_id][metr] = metr_value
             calculated_metrics_df = (
                 pd.DataFrame.from_dict(metrics_by_groups, orient='index')
                 .reset_index()

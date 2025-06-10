@@ -46,3 +46,5 @@ def check_connection_status():
     except Exception as e:
         logger.error(f"Connection error: {e}")
         return "not connected"
+    
+    
