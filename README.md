@@ -135,12 +135,12 @@ curl -X POST http://localhost:5000/<CALCULATOR_VERSION>/startCalc \
 
 > **Описание структуры конфигурационного файла**
 > 
-> [config/README.md](config\README.md)
+> [config/README.md](config/README.md)
 
 > **Описание использования методов загрузки файлов**
 > 
-> [input_files/README.md](input_files\README.md)
+> [input_files/README.md](input_files/README.md)
 
 > **Описание использования Excel-конструкторов**
 > 
-> [input_files/CONSTR_README.md](input_files\CONSTR_README.md)
+> [input_files/CONSTR_README.md](input_files/CONSTR_README.md)
