@@ -160,16 +160,15 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_001','RUR','LOSS_OBREM_CONTRACT',145.4),
 	 (1,'group_001','RUR','NEW_CONTRACT',146.5),
-	 (1,'group_001','RUR','RES_ADMIN_FACT',147.6),
 	 (1,'group_001','RUR','RES_ADMIN_EXPECT',148.7),
 	 (1,'group_001','RUR','RES_ADMIN_REFUND',149.8),
 	 (1,'group_001','RUR','CF_FACT_NOTINV',150.9),
 	 (1,'group_001','RUR','RES_MNG_FACT',152),
 	 (1,'group_001','RUR','RES_DEP_FACT',153.1),
 	 (1,'group_001','RUR','RES_ASV_FACT',154.2),
-	 (1,'group_001','RUR','EXPECT_NOT_INV',155.3);
+	 (1,'group_001','RUR','EXPECT_NOT_INV',155.3),
+	 (1,'group_001','RUR','RES_DEP_EXPECT',156.4);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (1,'group_001','RUR','RES_DEP_EXPECT',156.4),
 	 (1,'group_001','RUR','RES_MNG_EXPECT',157.5),
 	 (1,'group_001','RUR','RES_ASV_EXPECT',158.6),
 	 (1,'group_001','RUR','CF_REFUND_NOTINV',159.7),
@@ -178,91 +177,81 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (1,'group_001','RUR','CORR_EXP_124',163),
 	 (1,'group_001','RUR','RES_SUM_NPV_L_TOTAL',164.1),
 	 (1,'group_001','RUR','RES_TIME_NPV_L_TOTAL',165.2),
-	 (1,'group_001','RUR','RES_DISC_NPV_L_TOTAL',166.3);
+	 (1,'group_001','RUR','RES_DISC_NPV_L_TOTAL',166.3),
+	 (1,'group_001','RUR','RES_DISC_INIT_NPV_L_TOTAL',167.4);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (1,'group_001','RUR','RES_DISC_INIT_NPV_L_TOTAL',167.4),
 	 (1,'group_001','RUR','EXPECT_L_INV',168.5),
 	 (1,'group_001','RUR','EXPECT_L_NOT_INV',169.6),
 	 (1,'group_001','RUR','RES_L_UNDISC_UI',170.7),
 	 (1,'group_001','RUR','RES_L_UNDISC_NUI',171.8),
 	 (1,'group_001','RUR','UNDISC',172.9),
 	 (1,'group_001','RUR','FIN_PROFIT_TIME_DISC',174),
-	 (1,'group_001','RUR','RES_FEE_FACT',175.1),
-	 (1,'group_001','RUR','CF_FACT_NOTINV',176.2),
-	 (1,'group_001','RUR','CF_REFUND_NOTINV',177.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (1,'group_001','RUR','CF_FACT_INV',178.4),
 	 (1,'group_001','RUR','RES_ACQ_FACT',179.5),
 	 (1,'group_001','RUR','CONTRIB_INSHUR',180.6),
 	 (1,'group_001','RUR','PAYMENT_INSHUR',181.7),
-	 (1,'group_001','RUR','AHOTHER_CF',182.8),
+	 (1,'group_001','RUR','AHOTHER_CF',182.8);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_001','RUR','NET_OBLIGATE_PREV',183.9),
 	 (1,'group_001','RUR','FUTURE_PER',185),
 	 (1,'group_001','RUR','CHANGE_PAST_PER',186.1),
 	 (1,'group_001','RUR','CHANGE_PRESENT_PER',187.2),
-	 (1,'group_001','RUR','FIN_TOTAL_INSHUR',188.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (1,'group_001','RUR','FIN_TOTAL_INSHUR',188.3),
 	 (1,'group_001','RUR','INVEST',189.4),
 	 (1,'group_001','RUR','CF_T',190.5),
 	 (1,'group_001','RUR','AHOTHER',191.6),
 	 (1,'group_001','RUR','ACTIVE',192.7),
-	 (1,'group_001','RUR','OBLIGATE',193.8),
+	 (1,'group_001','RUR','OBLIGATE',193.8);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_002','RUR','PV_TOTAL_PAST',194.9),
 	 (1,'group_002','RUR','PV_L_TOTAL_PAST',196),
 	 (1,'group_002','RUR','ACTIVE_PREV',197.1),
 	 (1,'group_002','RUR','OBLIGATE_PREV',198.2),
-	 (1,'group_002','RUR','RES_SUM_NPV_TOTAL',199.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (1,'group_002','RUR','RES_SUM_NPV_TOTAL',199.3),
 	 (1,'group_002','RUR','CF_FACT_INV',200.4),
 	 (1,'group_002','RUR','EXPECT_INV',201.5),
 	 (1,'group_002','RUR','CF_REFUND_INV',202.6),
 	 (1,'group_002','RUR','RES_FEE_FACT',203.7),
-	 (1,'group_002','RUR','RES_FEE_EXPECT',204.8),
+	 (1,'group_002','RUR','RES_FEE_EXPECT',204.8);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_002','RUR','RES_FEE_REFUND',205.9),
 	 (1,'group_002','RUR','RES_FEE_FCOR',207),
 	 (1,'group_002','RUR','RES_ACC_TO_FACT',208.1),
 	 (1,'group_002','RUR','RES_ACC_FROM_FACT',209.2),
-	 (1,'group_002','RUR','DELTA_LS_NEGATIVE',210.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (1,'group_002','RUR','DELTA_LS_NEGATIVE',210.3),
 	 (1,'group_002','RUR','DELTA_LS_POSITIVE',211.4),
 	 (1,'group_002','RUR','RECOVERY_EXPECT',212.499999999999),
 	 (1,'group_002','RUR','RECOVERY_DISC',213.6),
 	 (1,'group_002','RUR','RECOVERY_DISC_INIT',214.7),
-	 (1,'group_002','RUR','CHANGE_EXPIR_CSM',215.799999999999),
+	 (1,'group_002','RUR','CHANGE_EXPIR_CSM',215.799999999999);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_002','RUR','LOSS_OBREM_CONTRACT',216.9),
 	 (1,'group_002','RUR','NEW_CONTRACT',217.999999999999),
-	 (1,'group_002','RUR','RES_ADMIN_FACT',219.1),
 	 (1,'group_002','RUR','RES_ADMIN_EXPECT',220.2),
-	 (1,'group_002','RUR','RES_ADMIN_REFUND',221.299999999999);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (1,'group_002','RUR','RES_ADMIN_REFUND',221.299999999999),
 	 (1,'group_002','RUR','CF_FACT_NOTINV',222.4),
 	 (1,'group_002','RUR','RES_MNG_FACT',223.499999999999),
 	 (1,'group_002','RUR','RES_DEP_FACT',224.599999999999),
 	 (1,'group_002','RUR','RES_ASV_FACT',225.699999999999),
 	 (1,'group_002','RUR','EXPECT_NOT_INV',226.799999999999),
-	 (1,'group_002','RUR','RES_DEP_EXPECT',227.899999999999),
+	 (1,'group_002','RUR','RES_DEP_EXPECT',227.899999999999);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_002','RUR','RES_MNG_EXPECT',228.999999999999),
 	 (1,'group_002','RUR','RES_ASV_EXPECT',230.099999999999),
 	 (1,'group_002','RUR','CF_REFUND_NOTINV',231.199999999999),
-	 (1,'group_002','RUR','RELEASE_CSM_PERIOD_124',232.299999999999);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (1,'group_002','RUR','RELEASE_CSM_PERIOD_124',232.299999999999),
 	 (1,'group_002','RUR','RA_RELEASE_124',233.399999999999),
 	 (1,'group_002','RUR','CORR_EXP_124',234.499999999999),
 	 (1,'group_002','RUR','RES_SUM_NPV_L_TOTAL',235.599999999999),
 	 (1,'group_002','RUR','RES_TIME_NPV_L_TOTAL',236.699999999999),
 	 (1,'group_002','RUR','RES_DISC_NPV_L_TOTAL',237.799999999999),
-	 (1,'group_002','RUR','RES_DISC_INIT_NPV_L_TOTAL',238.899999999999),
+	 (1,'group_002','RUR','RES_DISC_INIT_NPV_L_TOTAL',238.899999999999);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_002','RUR','EXPECT_L_INV',239.999999999999),
 	 (1,'group_002','RUR','EXPECT_L_NOT_INV',241.099999999999),
 	 (1,'group_002','RUR','RES_L_UNDISC_UI',242.199999999999),
-	 (1,'group_002','RUR','RES_L_UNDISC_NUI',243.299999999999);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (1,'group_002','RUR','RES_L_UNDISC_NUI',243.299999999999),
 	 (1,'group_002','RUR','UNDISC',244.399999999999),
 	 (1,'group_002','RUR','FIN_PROFIT_TIME_DISC',245.499999999999),
-	 (1,'group_002','RUR','RES_FEE_FACT',246.599999999999),
-	 (1,'group_002','RUR','CF_FACT_NOTINV',247.699999999999),
-	 (1,'group_002','RUR','CF_REFUND_NOTINV',248.799999999999),
-	 (1,'group_002','RUR','CF_FACT_INV',249.899999999999),
 	 (1,'group_002','RUR','RES_ACQ_FACT',250.999999999999),
 	 (1,'group_002','RUR','CONTRIB_INSHUR',252.099999999999),
 	 (1,'group_002','RUR','PAYMENT_INSHUR',253.199999999999),
@@ -282,27 +271,25 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (1,'group_001','RUR','GR_PREV_PV_TOTAL',123.4),
 	 (1,'group_001','RUR','GR_PREV_FEE_NPV',124.5),
 	 (1,'group_001','RUR','GR_PREV_COSTS',125.6),
-	 (1,'group_001','RUR','RES_ACQ_FACT',126.7),
 	 (1,'group_001','RUR','GR_PREV_ACCOUNT_BALANCE',127.8),
 	 (1,'group_001','RUR','GR_PREV_INCOME',128.9),
 	 (1,'group_001','RUR','GR_PREV_RA_AMT',130),
 	 (1,'group_001','RUR','GR_PREV_CSM_AMT',131.1),
 	 (1,'group_001','RUR','PV_OUTFLOW_OSBU',132.2),
-	 (1,'group_001','RUR','PV_TRIBUT_OSBU',133.3);
+	 (1,'group_001','RUR','PV_TRIBUT_OSBU',133.3),
+	 (1,'group_001','RUR','RES_RA_OSBU',134.4);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (1,'group_001','RUR','RES_RA_OSBU',134.4),
 	 (1,'group_001','RUR','RES_CSM_OSBU',135.5),
 	 (1,'group_001','RUR','METR_CR',136.6),
 	 (1,'group_002','RUR','GR_PREV_PV_TOTAL',137.7),
 	 (1,'group_002','RUR','GR_PREV_FEE_NPV',138.8),
 	 (1,'group_002','RUR','GR_PREV_COSTS',139.9),
-	 (1,'group_002','RUR','RES_ACQ_FACT',141),
 	 (1,'group_002','RUR','GR_PREV_ACCOUNT_BALANCE',142.1),
 	 (1,'group_002','RUR','GR_PREV_INCOME',143.2),
-	 (1,'group_002','RUR','GR_PREV_RA_AMT',144.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (1,'group_002','RUR','GR_PREV_RA_AMT',144.3),
 	 (1,'group_002','RUR','GR_PREV_CSM_AMT',145.4),
-	 (1,'group_002','RUR','PV_OUTFLOW_OSBU',146.5),
+	 (1,'group_002','RUR','PV_OUTFLOW_OSBU',146.5);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_002','RUR','PV_TRIBUT_OSBU',147.6),
 	 (1,'group_002','RUR','RES_RA_OSBU',148.7),
 	 (1,'group_002','RUR','RES_CSM_OSBU',149.8),
@@ -310,36 +297,27 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (1,'group_001','RUR','CSM_PREV',123.4),
 	 (1,'group_001','RUR','RA_PREV',124.5),
 	 (1,'group_001','RUR','LS_PREV',125.6),
-	 (1,'group_001','RUR','LOSS_OBREM_CONTRACT',126.7);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_001','RUR','DEPREC_AQUIS_CF',127.8),
 	 (1,'group_001','RUR','CHANGE_OBLIGATE',128.9),
-	 (1,'group_001','RUR','AHOTHER_COST_INSHUR',130),
+	 (1,'group_001','RUR','AHOTHER_COST_INSHUR',130);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_001','RUR','RA_UNDISC',131.1),
 	 (1,'group_001','RUR','RECOVERY_RA',132.2),
 	 (1,'group_001','RUR','REVENUE_INSHUR',133.3),
 	 (1,'group_001','RUR','COST_INSHUR',134.4),
 	 (1,'group_001','RUR','FIN_RES',135.5),
-	 (1,'group_001','RUR','INVEST',136.6),
-	 (1,'group_001','RUR','CF_T',137.7);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (1,'group_001','RUR','AHOTHER',138.8),
 	 (1,'group_002','RUR','CSM_PREV',139.9),
 	 (1,'group_002','RUR','RA_PREV',141),
 	 (1,'group_002','RUR','LS_PREV',142.1),
-	 (1,'group_002','RUR','LOSS_OBREM_CONTRACT',143.2),
 	 (1,'group_002','RUR','DEPREC_AQUIS_CF',144.3),
-	 (1,'group_002','RUR','CHANGE_OBLIGATE',145.4),
+	 (1,'group_002','RUR','CHANGE_OBLIGATE',145.4);
+INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
 	 (1,'group_002','RUR','AHOTHER_COST_INSHUR',146.5),
 	 (1,'group_002','RUR','RA_UNDISC',147.6),
-	 (1,'group_002','RUR','RECOVERY_RA',148.7);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (1,'group_002','RUR','RECOVERY_RA',148.7),
 	 (1,'group_002','RUR','REVENUE_INSHUR',149.8),
 	 (1,'group_002','RUR','COST_INSHUR',150.9),
 	 (1,'group_002','RUR','FIN_RES',152),
-	 (1,'group_002','RUR','INVEST',153.1),
-	 (1,'group_002','RUR','CF_T',154.2),
-	 (1,'group_002','RUR','AHOTHER',155.3),
 	 (2,'group_001','RUR','PV_TOTAL_PAST',123.4),
 	 (2,'group_001','RUR','CSM_PREV',124.5),
 	 (2,'group_001','RUR','RA_PREV',125.6),
@@ -406,110 +384,13 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (2,'group_002','RUR','RELEASE_CSM_PERIOD',186.1),
 	 (2,'group_002','RUR','RES_ACQ_AMORT',187.2),
 	 (2,'group_002','RUR','RECOVERY_EXPECT',188.3),
-	 (2,'group_002','RUR','RECOVERY_RA',189.4),
-	 (2,'group_002','RUR','LOSS_OBREM_CONTRACT',190.5),
-	 (2,'group_002','RUR','DEPREC_AQUIS_CF',191.6),
-	 (2,'group_002','RUR','CHANGE_OBLIGATE',192.7);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_002','RUR','AHOTHER_COST_INSHUR',193.8),
-	 (2,'group_002','RUR','UNDISC',194.9),
-	 (2,'group_002','RUR','CSM_PERCENT',196),
-	 (2,'group_002','RUR','RA_UNDISC',197.1),
-	 (2,'group_002','RUR','FIN_PROFIT_TIME_DISC',198.2),
-	 (2,'group_002','RUR','RECOVERY_DISC',199.3),
-	 (2,'group_002','RUR','RECOVERY_DISC_INIT',200.4),
-	 (2,'group_002','RUR','REVENUE_INSHUR',201.5),
-	 (2,'group_002','RUR','COST_INSHUR',202.6),
-	 (2,'group_002','RUR','FIN_TOTAL_INSHUR',203.7);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_001','RUR','PV_TOTAL_PAST',123.4),
-	 (2,'group_001','RUR','CSM_PREV',124.5),
-	 (2,'group_001','RUR','RA_PREV',125.6),
-	 (2,'group_001','RUR','LS_PREV',126.7),
-	 (2,'group_001','RUR','ACTIVE_PREV',127.8),
-	 (2,'group_001','RUR','OBLIGATE_PREV',128.9),
-	 (2,'group_001','RUR','EXPECT_NOT_INV',130),
-	 (2,'group_001','RUR','RES_DEP_EXPECT',131.1),
-	 (2,'group_001','RUR','RES_MNG_EXPECT',132.2),
-	 (2,'group_001','RUR','RES_ASV_EXPECT',133.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_001','RUR','RES_ADMIN_EXPECT',134.4),
-	 (2,'group_001','RUR','RA_RELEASE',135.5),
-	 (2,'group_001','RUR','RELEASE_CSM_PERIOD',136.6),
-	 (2,'group_001','RUR','RES_ACQ_AMORT',137.7),
-	 (2,'group_001','RUR','RECOVERY_EXPECT',138.8),
-	 (2,'group_002','RUR','RECOVERY_RA',139.9),
-	 (2,'group_002','RUR','LOSS_OBREM_CONTRACT',141),
-	 (2,'group_002','RUR','DEPREC_AQUIS_CF',142.1),
-	 (2,'group_002','RUR','CHANGE_OBLIGATE',143.2),
-	 (2,'group_002','RUR','AHOTHER_COST_INSHUR',144.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_002','RUR','UNDISC',145.4),
-	 (2,'group_002','RUR','CSM_PERCENT',146.5),
-	 (2,'group_002','RUR','RA_UNDISC',147.6),
-	 (2,'group_002','RUR','FIN_PROFIT_TIME_DISC',148.7),
-	 (2,'group_002','RUR','RECOVERY_DISC',149.8),
-	 (2,'group_002','RUR','RECOVERY_DISC_INIT',150.9),
-	 (2,'group_002','RUR','REVENUE_INSHUR',152),
-	 (2,'group_002','RUR','COST_INSHUR',153.1),
-	 (2,'group_002','RUR','FIN_TOTAL_INSHUR',154.2),
-	 (2,'group_002','RUR','CF_FACT_INV',155.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_001','RUR','CF_REFUND_INV',156.4),
-	 (2,'group_001','RUR','RES_FEE_FACT',157.5),
-	 (2,'group_001','RUR','RES_FEE_REFUND',158.6),
-	 (2,'group_001','RUR','RES_FEE_FCOR',159.7),
-	 (2,'group_001','RUR','RES_ACQ_FACT',160.8),
-	 (2,'group_001','RUR','CONTRIB_INSHUR',161.9),
-	 (2,'group_001','RUR','PAYMENT_INSHUR',163),
-	 (2,'group_001','RUR','AHOTHER_CF',164.1),
-	 (2,'group_001','RUR','NET_OBLIGATE_PREV',165.2),
-	 (2,'group_001','RUR','FIN_RES',166.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_001','RUR','INVEST',167.4),
-	 (2,'group_001','RUR','CF_T',168.5),
-	 (2,'group_001','RUR','AHOTHER',169.6),
-	 (2,'group_001','RUR','ACTIVE',170.7),
-	 (2,'group_001','RUR','OBLIGATE',171.8),
-	 (2,'group_002','RUR','PV_TOTAL_PAST',172.9),
-	 (2,'group_002','RUR','CSM_PREV',174),
-	 (2,'group_002','RUR','RA_PREV',175.1),
-	 (2,'group_002','RUR','LS_PREV',176.2),
-	 (2,'group_002','RUR','ACTIVE_PREV',177.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_002','RUR','OBLIGATE_PREV',178.4),
-	 (2,'group_002','RUR','EXPECT_NOT_INV',179.5),
-	 (2,'group_002','RUR','RES_DEP_EXPECT',180.6),
-	 (2,'group_002','RUR','RES_MNG_EXPECT',181.7),
-	 (2,'group_002','RUR','RES_ASV_EXPECT',182.8),
-	 (2,'group_002','RUR','RES_ADMIN_EXPECT',183.9),
-	 (2,'group_002','RUR','RA_RELEASE',185),
-	 (2,'group_002','RUR','RELEASE_CSM_PERIOD',186.1),
-	 (2,'group_002','RUR','RES_ACQ_AMORT',187.2),
-	 (2,'group_002','RUR','RECOVERY_EXPECT',188.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_002','RUR','RECOVERY_RA',189.4),
-	 (2,'group_002','RUR','LOSS_OBREM_CONTRACT',190.5),
-	 (2,'group_002','RUR','DEPREC_AQUIS_CF',191.6),
-	 (2,'group_002','RUR','CHANGE_OBLIGATE',192.7),
-	 (2,'group_002','RUR','AHOTHER_COST_INSHUR',193.8),
-	 (2,'group_002','RUR','UNDISC',194.9),
-	 (2,'group_002','RUR','CSM_PERCENT',196),
-	 (2,'group_002','RUR','RA_UNDISC',197.1),
-	 (2,'group_002','RUR','FIN_PROFIT_TIME_DISC',198.2),
-	 (2,'group_002','RUR','RECOVERY_DISC',199.3);
-INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
-	 (2,'group_002','RUR','RECOVERY_DISC_INIT',200.4),
-	 (2,'group_002','RUR','REVENUE_INSHUR',201.5),
-	 (2,'group_002','RUR','COST_INSHUR',202.6),
-	 (2,'group_002','RUR','FIN_TOTAL_INSHUR',203.7),
 	 (3,'group_001','RUR','PV_TOTAL_PAST',123.4),
 	 (3,'group_001','RUR','CSM_PREV',124.5),
 	 (3,'group_001','RUR','RA_PREV',125.6),
-	 (3,'group_001','RUR','LS_PREV',126.7),
-	 (3,'group_001','RUR','ACTIVE_PREV',127.8),
-	 (3,'group_001','RUR','OBLIGATE_PREV',128.9);
+	 (3,'group_001','RUR','LS_PREV',126.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_001','RUR','ACTIVE_PREV',127.8),
+	 (3,'group_001','RUR','OBLIGATE_PREV',128.9),
 	 (3,'group_001','RUR','EXPECT_NOT_INV',130),
 	 (3,'group_001','RUR','RES_DEP_EXPECT',131.1),
 	 (3,'group_001','RUR','RES_MNG_EXPECT',132.2),
@@ -517,10 +398,10 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (3,'group_001','RUR','RES_ADMIN_EXPECT',134.4),
 	 (3,'group_001','RUR','RA_RELEASE',135.5),
 	 (3,'group_001','RUR','RELEASE_CSM_PERIOD',136.6),
-	 (3,'group_001','RUR','RES_ACQ_AMORT',137.7),
-	 (3,'group_001','RUR','RECOVERY_EXPECT',138.8),
-	 (3,'group_001','RUR','RECOVERY_RA',139.9);
+	 (3,'group_001','RUR','RES_ACQ_AMORT',137.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_001','RUR','RECOVERY_EXPECT',138.8),
+	 (3,'group_001','RUR','RECOVERY_RA',139.9),
 	 (3,'group_001','RUR','LOSS_OBREM_CONTRACT',141),
 	 (3,'group_001','RUR','DEPREC_AQUIS_CF',142.1),
 	 (3,'group_001','RUR','CHANGE_OBLIGATE',143.2),
@@ -528,10 +409,10 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (3,'group_001','RUR','UNDISC',145.4),
 	 (3,'group_001','RUR','CSM_PERCENT',146.5),
 	 (3,'group_001','RUR','RA_UNDISC',147.6),
-	 (3,'group_001','RUR','FIN_PROFIT_TIME_DISC',148.7),
-	 (3,'group_001','RUR','RECOVERY_DISC',149.8),
-	 (3,'group_001','RUR','RECOVERY_DISC_INIT',150.9);
+	 (3,'group_001','RUR','FIN_PROFIT_TIME_DISC',148.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_001','RUR','RECOVERY_DISC',149.8),
+	 (3,'group_001','RUR','RECOVERY_DISC_INIT',150.9),
 	 (3,'group_001','RUR','REVENUE_INSHUR',152),
 	 (3,'group_001','RUR','COST_INSHUR',153.1),
 	 (3,'group_001','RUR','FIN_TOTAL_INSHUR',154.2),
@@ -539,10 +420,10 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (3,'group_001','RUR','CF_REFUND_INV',156.4),
 	 (3,'group_001','RUR','RES_FEE_FACT',157.5),
 	 (3,'group_001','RUR','RES_FEE_REFUND',158.6),
-	 (3,'group_001','RUR','RES_FEE_FCOR',159.7),
-	 (3,'group_001','RUR','RES_ACQ_FACT',160.8),
-	 (3,'group_001','RUR','CONTRIB_INSHUR',161.9);
+	 (3,'group_001','RUR','RES_FEE_FCOR',159.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_001','RUR','RES_ACQ_FACT',160.8),
+	 (3,'group_001','RUR','CONTRIB_INSHUR',161.9),
 	 (3,'group_001','RUR','PAYMENT_INSHUR',163),
 	 (3,'group_001','RUR','AHOTHER_CF',164.1),
 	 (3,'group_001','RUR','NET_OBLIGATE_PREV',165.2),
@@ -550,10 +431,10 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (3,'group_001','RUR','INVEST',167.4),
 	 (3,'group_001','RUR','CF_T',168.5),
 	 (3,'group_001','RUR','AHOTHER',169.6),
-	 (3,'group_001','RUR','ACTIVE',170.7),
-	 (3,'group_001','RUR','OBLIGATE',171.8),
-	 (3,'group_002','RUR','PV_TOTAL_PAST',172.9);
+	 (3,'group_001','RUR','ACTIVE',170.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_001','RUR','OBLIGATE',171.8),
+	 (3,'group_002','RUR','PV_TOTAL_PAST',172.9),
 	 (3,'group_002','RUR','CSM_PREV',174),
 	 (3,'group_002','RUR','RA_PREV',175.1),
 	 (3,'group_002','RUR','LS_PREV',176.2),
@@ -561,10 +442,10 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (3,'group_002','RUR','OBLIGATE_PREV',178.4),
 	 (3,'group_002','RUR','EXPECT_NOT_INV',179.5),
 	 (3,'group_002','RUR','RES_DEP_EXPECT',180.6),
-	 (3,'group_002','RUR','RES_MNG_EXPECT',181.7),
-	 (3,'group_002','RUR','RES_ASV_EXPECT',182.8),
-	 (3,'group_002','RUR','RES_ADMIN_EXPECT',183.9);
+	 (3,'group_002','RUR','RES_MNG_EXPECT',181.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_002','RUR','RES_ASV_EXPECT',182.8),
+	 (3,'group_002','RUR','RES_ADMIN_EXPECT',183.9),
 	 (3,'group_002','RUR','RA_RELEASE',185),
 	 (3,'group_002','RUR','RELEASE_CSM_PERIOD',186.1),
 	 (3,'group_002','RUR','RES_ACQ_AMORT',187.2),
@@ -572,10 +453,10 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (3,'group_002','RUR','RECOVERY_RA',189.4),
 	 (3,'group_002','RUR','LOSS_OBREM_CONTRACT',190.5),
 	 (3,'group_002','RUR','DEPREC_AQUIS_CF',191.6),
-	 (3,'group_002','RUR','CHANGE_OBLIGATE',192.7),
-	 (3,'group_002','RUR','AHOTHER_COST_INSHUR',193.8),
-	 (3,'group_002','RUR','UNDISC',194.9);
+	 (3,'group_002','RUR','CHANGE_OBLIGATE',192.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_002','RUR','AHOTHER_COST_INSHUR',193.8),
+	 (3,'group_002','RUR','UNDISC',194.9),
 	 (3,'group_002','RUR','CSM_PERCENT',196),
 	 (3,'group_002','RUR','RA_UNDISC',197.1),
 	 (3,'group_002','RUR','FIN_PROFIT_TIME_DISC',198.2),
@@ -583,10 +464,10 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (3,'group_002','RUR','RECOVERY_DISC_INIT',200.4),
 	 (3,'group_002','RUR','REVENUE_INSHUR',201.5),
 	 (3,'group_002','RUR','COST_INSHUR',202.6),
-	 (3,'group_002','RUR','FIN_TOTAL_INSHUR',203.7),
-	 (3,'group_002','RUR','CF_FACT_INV',204.8),
-	 (3,'group_002','RUR','CF_REFUND_INV',205.9);
+	 (3,'group_002','RUR','FIN_TOTAL_INSHUR',203.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_002','RUR','CF_FACT_INV',204.8),
+	 (3,'group_002','RUR','CF_REFUND_INV',205.9),
 	 (3,'group_002','RUR','RES_FEE_FACT',207),
 	 (3,'group_002','RUR','RES_FEE_REFUND',208.1),
 	 (3,'group_002','RUR','RES_FEE_FCOR',209.2),
@@ -594,14 +475,15 @@ INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_typ
 	 (3,'group_002','RUR','CONTRIB_INSHUR',211.4),
 	 (3,'group_002','RUR','PAYMENT_INSHUR',212.499999999999),
 	 (3,'group_002','RUR','AHOTHER_CF',213.6),
-	 (3,'group_002','RUR','NET_OBLIGATE_PREV',214.7),
-	 (3,'group_002','RUR','FIN_RES',215.799999999999),
-	 (3,'group_002','RUR','INVEST',216.9);
+	 (3,'group_002','RUR','NET_OBLIGATE_PREV',214.7);
 INSERT INTO input_data.result_amount_gr (calc_id,group_id,currency_cd,amount_type_cd,amount_amt) VALUES
+	 (3,'group_002','RUR','FIN_RES',215.799999999999),
+	 (3,'group_002','RUR','INVEST',216.9),
 	 (3,'group_002','RUR','CF_T',217.999999999999),
 	 (3,'group_002','RUR','AHOTHER',219.1),
 	 (3,'group_002','RUR','ACTIVE',220.2),
 	 (3,'group_002','RUR','OBLIGATE',221.299999999999);
+
 INSERT INTO input_data.res_groups_ifrs_17 (group_id,cohort_cd,inception_dt,ifrs_approach_cd,classification_category_cd,ifrs_onerous_type,direct_participation_flag,discret_participation_flag,portfolio_cd,currency_cd,calc_id,business_line_cd,policy_type_cd,investment_strategy_cd,product_name) VALUES
 	 ('group_001','2025-01-01','2025-03-25','VFA','INSURANCE','N','N','Y','2.1','RUR',1,'','OPS','not_set','OPS'),
 	 ('group_002','2024-01-01','2024-03-20','VFA','INSURANCE','Y','N','Y','2.1','RUR',1,'','OPS','not_set','OPS'),
