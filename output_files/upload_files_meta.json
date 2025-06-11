@@ -1,0 +1,106 @@
+[
+    {
+        "filename": "/app/input_files/storage/conf/1_reports_config_11062025.json",
+        "file_desc": "just normal new-type reports config for tests",
+        "id": 1,
+        "file_type": "conf",
+        "add_dttm": "2025-06-10T23:35:48.765211",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/constr/2_constructor_rep_amt.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0442\u043e\u0440 amt, \u0438\u0437 \u043f\u0440\u043e\u0448\u043b\u043e\u0439 \u043f\u0430\u043f\u043a\u0438 constructors",
+        "id": 2,
+        "file_type": "constr",
+        "add_dttm": "2025-06-10T23:41:59.693600",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/constr/3_constructor_rep_pl_new.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0442\u043e\u0440 pl, \u0438\u0437 \u043f\u0440\u043e\u0448\u043b\u043e\u0439 \u043f\u0430\u043f\u043a\u0438 constructors",
+        "id": 3,
+        "file_type": "constr",
+        "add_dttm": "2025-06-10T23:42:27.863852",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/constr/4_constructor_rep_component_analysis.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0442\u043e\u0440 pl, \u0438\u0437 \u043f\u0440\u043e\u0448\u043b\u043e\u0439 \u043f\u0430\u043f\u043a\u0438 constructors",
+        "id": 4,
+        "file_type": "constr",
+        "add_dttm": "2025-06-10T23:42:40.407911",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/constr/5_constructor_rep_cr.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0442\u043e\u0440 cr, \u0438\u0437 \u043f\u0440\u043e\u0448\u043b\u043e\u0439 \u043f\u0430\u043f\u043a\u0438 constructors",
+        "id": 5,
+        "file_type": "constr",
+        "add_dttm": "2025-06-10T23:42:54.714693",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/constr/6_constructor_rep_liab_analysis.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0442\u043e\u0440 liab_analysis, \u0438\u0437 \u043f\u0440\u043e\u0448\u043b\u043e\u0439 \u043f\u0430\u043f\u043a\u0438 constructors",
+        "id": 6,
+        "file_type": "constr",
+        "add_dttm": "2025-06-10T23:45:11.114400",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/ref/7_\u0421\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a \u0430\u0442\u0440\u0438\u0431\u0443\u0442\u043e\u0432 \u0433\u0440\u0443\u043f\u043f \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u043e\u0432.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a, \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u044b\u0439 \u0438\u0437 \u0441\u0442\u0430\u0440\u044b\u0445 \u0444\u0430\u0439\u043b\u043e\u0432",
+        "id": 7,
+        "file_type": "ref",
+        "add_dttm": "2025-06-11T00:28:50.721948",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/ref/8_\u0421\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a \u043d\u0430\u0438\u043c\u0435\u043d\u043e\u0432\u0430\u043d\u0438\u0439 \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u043e\u0432.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a, \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u044b\u0439 \u0438\u0437 \u0441\u0442\u0430\u0440\u044b\u0445 \u0444\u0430\u0439\u043b\u043e\u0432",
+        "id": 8,
+        "file_type": "ref",
+        "add_dttm": "2025-06-11T00:29:08.178529",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/ref/9_\u0421\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a \u043e\u0442\u0447\u0435\u0442\u043d\u044b\u0445 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u0435\u0439.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a, \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u044b\u0439 \u0438\u0437 \u0441\u0442\u0430\u0440\u044b\u0445 \u0444\u0430\u0439\u043b\u043e\u0432",
+        "id": 9,
+        "file_type": "ref",
+        "add_dttm": "2025-06-11T00:29:19.037409",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/ref/10_\u0421\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a \u0442\u0438\u043f\u043e\u0432 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u043e\u0432.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a, \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u044b\u0439 \u0438\u0437 \u0441\u0442\u0430\u0440\u044b\u0445 \u0444\u0430\u0439\u043b\u043e\u0432",
+        "id": 10,
+        "file_type": "ref",
+        "add_dttm": "2025-06-11T00:29:27.155428",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/ref/11_\u0421\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a \u044d\u043b\u0435\u043c\u0435\u043d\u0442\u043e\u0432 \u043e\u0446\u0435\u043d\u043a\u0438 \u0441\u0442\u0440\u0430\u0445\u043e\u0432\u044b\u0445 \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u043e\u0432.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a, \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u044b\u0439 \u0438\u0437 \u0441\u0442\u0430\u0440\u044b\u0445 \u0444\u0430\u0439\u043b\u043e\u0432",
+        "id": 11,
+        "file_type": "ref",
+        "add_dttm": "2025-06-11T00:29:40.924707",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/ref/12_\u0421\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a \u043c\u0435\u0442\u043e\u0434\u043e\u0432 \u043e\u0446\u0435\u043d\u043a\u0438 \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u0441\u0442\u0432 \u043f\u043e \u041c\u0421\u0424\u041e17.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a, \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u044b\u0439 \u0438\u0437 \u0441\u0442\u0430\u0440\u044b\u0445 \u0444\u0430\u0439\u043b\u043e\u0432",
+        "id": 12,
+        "file_type": "ref",
+        "add_dttm": "2025-06-11T00:31:48.405605",
+        "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/ref/13_\u0421\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a \u043a\u043e\u043c\u043f\u043e\u043d\u0435\u043d\u0442\u043e\u0432 \u043f\u043e\u0442\u0435\u0440\u044c \u041c\u0421\u0424\u041e17.xlsx",
+        "file_desc": "\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u0438\u043a, \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u044b\u0439 \u0438\u0437 \u0441\u0442\u0430\u0440\u044b\u0445 \u0444\u0430\u0439\u043b\u043e\u0432",
+        "id": 13,
+        "file_type": "ref",
+        "add_dttm": "2025-06-11T00:31:57.967504",
+        "is_active": true
+    }
+]
