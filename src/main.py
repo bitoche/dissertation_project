@@ -134,7 +134,8 @@ def save_df_to_excel(path: Path, df: pd.DataFrame, sheet_name: str):
 @timer
 def start_calc(item: GeneralInfo):
     try:
-        IS_DEBUG = True if mf_log.getEffectiveLevel() <= 10 else False 
+        IS_DEBUG = True if mf_log.getEffectiveLevel() <= 10 else False
+        
         mf_log.info(f"IS_DEBUG={IS_DEBUG}, effective log level={mf_log.getEffectiveLevel()}")
         CURRENT_DATETIME = datetime.now()
         CURRENT_DATETIME_STR = CURRENT_DATETIME.strftime("%Y_%m_%d_%H_%M_%S")
@@ -167,12 +168,17 @@ def start_calc(item: GeneralInfo):
         reports_config_data = read_configuration_file(crud.get_by_id(conf_file_id).filename)
         
         check_logic_of_configuration(reports_config_data, ignore_errors=False)
-
+        
         reports_config = ReportsConfigurationModel(reports_config_data)
         activated_reports = item.reports_to_calc
         refs_configuration = reports_config.refs
         
         mf_log.info(f"Activated reports: {activated_reports}")
+
+        dump_mart_to_file_param = get_param(True, reports_config.configuration_data_dict, ['general', 'dump_mart_to_file'])
+
+        DEBUG_DUMP = IS_DEBUG and dump_mart_to_file_param
+        DUMP_MART = dump_mart_to_file_param
 
         # update refs if needed
         is_needed_refs_update = get_param(True, reports_config.configuration_data_dict, ['general','auto_update_refs'])
@@ -250,7 +256,7 @@ def start_calc(item: GeneralInfo):
             constructor_df = read_constructor(constructor_config)
             rlog.debug(f'constructor:\n{constructor_df}')
 
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), constructor_df, 'constructor') if IS_DEBUG else None
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), constructor_df, 'constructor') if DUMP_MART else None
 
             report_date = sql_variable(rep, SQL_VAR.VARIABLE)(report_date)
             prev_report_date = sql_variable(rep, SQL_VAR.VARIABLE)(prev_report_date)
@@ -336,9 +342,12 @@ def start_calc(item: GeneralInfo):
             select_group_attrs_query = prepare_query(select_group_attrs_script, sql_variables[rep])
             rlog.info(f'Started get group attrs: \n{select_group_attrs_query}')
             group_attrs = pd.read_sql(select_group_attrs_query, con=DB_CONNECTION_ROW)
+            original_group_attrs = (
+                group_attrs.copy()
+            )
             recieved_group_attrs = group_attrs.copy()
 
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), group_attrs, 'group_attrs')
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), group_attrs, 'group_attrs') if DUMP_MART else None
 
             # добавление структурообразующих столбцов
             needed_struct_cols = {}
@@ -373,7 +382,7 @@ def start_calc(item: GeneralInfo):
                     .merge(ref_df, how='cross')
                     .rename(columns={ref_cols_to_mapping_list: used_struct_col})
                 )
-                save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), group_attrs, f'gr_attrs_{used_struct_col}_mgd') if IS_DEBUG else None
+                save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), group_attrs, f'gr_attrs_{used_struct_col}_mgd') if DEBUG_DUMP else None
 
             rlog.debug(f'group attrs:\n{group_attrs}')
             if len(group_attrs.index) == 0:
@@ -396,7 +405,7 @@ def start_calc(item: GeneralInfo):
             #     .drop(columns=['calc_id'])
             # )
             rlog.debug(f'groups_to_calc:\n{groups_to_calc}')
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), groups_to_calc, f'grs_to_calc') if IS_DEBUG else None
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), groups_to_calc, f'grs_to_calc') if DUMP_MART else None
             amount_amt_group_results_columns = get_param(None, group_results_source_config, 'amount_columns')
             primary_key_group_results_columns = get_param(None, group_results_source_config, 'primary_key_columns')
             results_for_groups_to_calc = results_by_groups[primary_key_group_results_columns + amount_amt_group_results_columns]
@@ -417,11 +426,11 @@ def start_calc(item: GeneralInfo):
                 results_for_groups_to_calc
                 .drop(columns=['calc_id'])
             )
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), results_for_groups_to_calc, f'ress_for_calc')
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), results_for_groups_to_calc, f'ress_for_calc') if DUMP_MART else None
             raw_metrics_to_calc_from_constr = constructor_df['metric_name'].astype(str).drop_duplicates()
             metrics_to_calc_from_constr = raw_metrics_to_calc_from_constr.str.strip() # уникальные названия показателей для расчета
 
-            metrics_by_groups = {}
+            metrics_by_groups = []
             for index, group_row in groups_to_calc.iterrows():
                 group_id = group_row['group_id']
                 group_with_attrs_df = pd.DataFrame([group_row])
@@ -432,8 +441,9 @@ def start_calc(item: GeneralInfo):
                 rlog.debug(f'current_group_results:\n{current_group_results}')
                 
                 # расчет показателей из конструктора по группам АТРИБУТОВ ГРУПП
-                metrics_by_groups[group_id] = {}
-                metrics_by_groups[group_id]['attributes'] = group_row
+                group_metrics = {'group_id': group_id}
+                group_metrics.update(group_row.to_dict())  # Добавляем атрибуты группы
+
                 for metr in  metrics_to_calc_from_constr:
                     filter_formula = constructor_df[constructor_df['metric_name'].str.strip() == metr]['filter_formula'].iloc[0]
                     try:
@@ -484,20 +494,20 @@ def start_calc(item: GeneralInfo):
                     else:
                         rlog.warning(f'Calc_formula for "{metr}" IGNORED cause FILTER_RESULT is FALSE.')
                         metr_value = 0
-                    metrics_by_groups[group_id][metr] = metr_value
+                    group_metrics[metr] = metr_value
                     rlog.debug(f'Writed "{metr}" value for current group: {metr_value}')
+                metrics_by_groups.append(group_metrics)
             calculated_metrics_df = (
-                pd.DataFrame.from_dict(metrics_by_groups, orient='index')
-                .reset_index()
-                .rename(columns={'index': 'group_id'})
+                pd.DataFrame(metrics_by_groups)
+                # .reset_index()
+                # .rename(columns={'index': 'group_id'})
                 )
-            attrs_df = pd.json_normalize(calculated_metrics_df['attributes'])
-
-            calculated_metrics_df = pd.concat([calculated_metrics_df.drop(columns=['attributes']), attrs_df], axis=1)
-
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), calculated_metrics_df, f'calculated_metrics_df') if IS_DEBUG else None
-            id_vars = ['group_id'] + list(attrs_df.columns)
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), calculated_metrics_df, f'c_m_df_from_dict') if DEBUG_DUMP else None
+            id_vars = [col for col in groups_to_calc.columns]
+            rlog.debug(f'FOUNDED ATTRIBUTES COLUMNS: {id_vars}\nALL THE COLUMNS: {calculated_metrics_df.columns}')
             value_vars = [col for col in calculated_metrics_df.columns if col not in id_vars]
+            if not value_vars:
+                raise ValueError("No metric columns found in calculated_metrics_df to melt. Check metrics_to_calc_from_constr.")
             calculated_metrics_df = calculated_metrics_df.melt(
                 id_vars=id_vars,
                 value_vars=value_vars,
@@ -505,13 +515,15 @@ def start_calc(item: GeneralInfo):
                 value_name='amount_amt'
             )
             rlog.debug(f'calculated metrics:\n{calculated_metrics_df}')
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), calculated_metrics_df, f'calculated_metrics_melted') if IS_DEBUG else None
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), calculated_metrics_df, f'calculated_metrics_melted') if DEBUG_DUMP else None
             
             # сборка итогового dataframe со всеми необходимыми столбцами
-            
+            cols_to_merge_with_attrs = [col for col in original_group_attrs.columns if col not in calculated_metrics_df.columns and col != 'group_id']
+            final_merge_cols = ['group_id'] + cols_to_merge_with_attrs # добавление group_id для связи
+
             mart_df = (
                 calculated_metrics_df
-                .merge(group_attrs, how='left', on='group_id')
+                .merge(original_group_attrs[final_merge_cols], how='left', on='group_id')
                 .assign(report_date=lambda x: dt_report_date)
                 .assign(prev_report_date=lambda x: dt_prev_report_date)
                 .assign(load_dttm=lambda x: CURRENT_DATETIME)
@@ -522,7 +534,7 @@ def start_calc(item: GeneralInfo):
             rlog.info(f'mart:\n{mart_df}')
 
             # временное сохранение полученной mart в output_files
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), mart_df, 'temp_mart') if IS_DEBUG else None
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), mart_df, 'temp_mart') if DEBUG_DUMP else None
             
             # подготовка таблицы под витрину
             data_mart_name = sql_variable(rep, SQL_VAR.VARIABLE)(get_param(None, mart_config, 'table_name'))
@@ -609,7 +621,7 @@ def start_calc(item: GeneralInfo):
                     rlog.exception(f'Error! Merge cant be applied to data mart.')
                     raise
             # временное сохранение полученной mart в output_files
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), beautiful_mart_df, 'fully_merged_mart') if IS_DEBUG else None
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), beautiful_mart_df, 'fully_merged_mart') if DEBUG_DUMP else None
             rlog.info(f'Started construct result mart {rep}')
             try:
                 beautiful_mart_df = beautiful_mart_df[cols_to_be_in_mart]
@@ -619,7 +631,7 @@ def start_calc(item: GeneralInfo):
             rlog.debug(f'successful constructed result mart:\n{beautiful_mart_df}')
             
             # временное сохранение полученной mart в output_files
-            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), beautiful_mart_df, 'result_mart')
+            save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), beautiful_mart_df, 'result_mart') if DUMP_MART else None
 
             prepare_data_mart_table_script = open(Path(MODULE_SCRIPTS_PATH, 'prepare_data_mart_table.sql'),'r').read()
         
