@@ -3,6 +3,7 @@ from datetime import datetime
 import logging as _logging
 from fastapi import UploadFile
 from .file_model_intefrace import *
+from src.model.file_model_intefrace import JSONCrud
 from src.config.configurator import check_logic_of_configuration
 from .file_model_intefrace import MetaFileInfo
 logger = _logging.getLogger("app").getChild("validator")
@@ -14,9 +15,21 @@ class GeneralInfo(BaseModel):
     report_date: str
     actual_date: str
     prev_report_date: str
+    json_configuration_id: int
+    reports_to_calc: list[str] # список отчетов, которые надо рассчитать, должна быть определены в конфигурации. например ["ABC", "XYZ"]
+
     def is_valid(self):
         errors = []
         calc_date_fmts[self.calc_id] = {}
+        try:
+            crud = JSONCrud()
+            meta = crud.get_by_id(self.json_configuration_id)
+            if meta == None:
+                errors.append({"by_check":"CONFIGURATION FILE META","message": f'configuration file not found in uploads meta info file'})
+            if meta.is_active == False:
+                errors.append({"by_check":"CONFIGURATION FILE META","message": f'ERROR: try to use deactivated reports JSON configuration'})
+        except:
+            errors.append({"by_check":"UPLOADS META FILE","message": f'cant read meta file. check logs for more info'})
         try:
             report_date_obj = datetime.strptime(self.report_date, "%Y-%m-%d").date()
             calc_date_fmts[self.calc_id]['report_date_fmt'] = "%Y-%m-%d"
@@ -57,8 +70,3 @@ class GeneralInfo(BaseModel):
         if len(errors)>0:
             return 'bad', errors
         return 'good', []
-
-
-class StartReportItem(GeneralInfo):
-    json_configuration_id: int
-    reports_to_calc: list[str] # список отчетов, которые надо рассчитать, должна быть определены в конфигурации. например ["ABC", "XYZ"]

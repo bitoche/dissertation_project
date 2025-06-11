@@ -5,12 +5,8 @@ from config.config import ModuleConfig
 import logging as _logging
 logger = _logging.getLogger('serv').getChild('rep').getChild('configurator')
 
-def read_configuration_file(proj_param:str):
-    configuration_filename = replace_all(
-        'reports_config_<proj>.json',
-        {'<proj>': proj_param}
-    )
-    configuration_file_path = Path(ModuleConfig.CONFIGURATION_FILES_PATH, configuration_filename)
+def read_configuration_file(filename:str):
+    configuration_file_path = Path(filename)
     logger.info(f'Started read configuration file {configuration_file_path}')
     configuration_file_data = {}
     try:
@@ -24,7 +20,7 @@ def read_configuration_file(proj_param:str):
 
 def check_logic_of_configuration(configuration_in_dict: dict, ignore_errors: bool = False):
     """
-    Выводит отчет о логических ошибках в конфигурации JSON модуля (`reports_config_<proj_param>.json`). Возвращает 'ok', если ошибок нет, и 'bad' если найдены ошибки.
+    Выводит отчет о логических ошибках в конфигурации JSON модуля . Возвращает 'ok', если ошибок нет, и 'bad' если найдены ошибки.
 
     :param configuration_in_dict: Прочитанный dict JSON-конфигурации модуля. Если его не задать, будет читаться конфигурация с постфиксом `demo1`.
     :param ignore_errors: Параметр, при `True` которого метод не выбросит ошибки при нахождении логических ошибок в конфигурации. По умолчанию `False`
@@ -182,7 +178,6 @@ def find_struct_cols_in_config(rep_name:str, config_dict:dict):
 
 class ReportsConfigurationModel():
     def __init__(self, configuration_file_data:dict):
-        self.activated_reports = configuration_file_data['activated_reports']
         self.refs = configuration_file_data['refs']
-        self.all_reports = configuration_file_data['all_reports']
+        self.all_reports = configuration_file_data['reports'].keys()
         self.configuration_data_dict = configuration_file_data

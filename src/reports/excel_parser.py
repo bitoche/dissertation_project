@@ -2,8 +2,8 @@ import pandas as pd
 from src.handlers import get_param
 from pathlib import Path
 from config.config import AppConfig, ModuleConfig
+from src.model.file_model_intefrace import JSONCrud
 
-PROJ_PARAM = AppConfig.PROJ_PARAM
 MODULE_INPUT_FILES_PATH = ModuleConfig.MODULE_INPUT_FILES_PATH
 CONSTRUCTORS_PATH = Path(MODULE_INPUT_FILES_PATH, 'constructors')
 REFS_PATH = Path(MODULE_INPUT_FILES_PATH, 'refs')
@@ -21,11 +21,13 @@ class ConstructorConfig():
         self.header = header
 
 def read_constructor(constructor_config: dict):
-    filename = get_param(None, constructor_config, ['filename'])
+    crud = JSONCrud()
+    file_id = get_param(None, constructor_config, ['file_id'])
+    filename = crud.get_by_id(file_id).filename
 
     logger.info(f'Started read constructor {filename}')
 
-    cconf = ConstructorConfig(filepath=Path(CONSTRUCTORS_PATH, PROJ_PARAM, filename),
+    cconf = ConstructorConfig(filepath=Path(filename),
                               constructor_sheet_name=get_param('constructor', constructor_config, ['constructor_sheet_name']),
                               header=get_param(2, constructor_config, ['header']))
     try:
@@ -47,7 +49,7 @@ class RefReadModel():
         
 
 def read_ref(ref_read_model: RefReadModel):
-    rp = Path(REFS_PATH, PROJ_PARAM, ref_read_model.filename)
+    rp = Path(ref_read_model.filename)
     try:
         return pd.read_excel(io=rp, 
                              sheet_name=ref_read_model.sheet_name, 
