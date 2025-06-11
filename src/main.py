@@ -342,7 +342,8 @@ def start_calc(item: GeneralInfo):
 
             # добавление структурообразующих столбцов
             needed_struct_cols = {}
-            for used_struct_col, struct_col_config in find_struct_cols_in_config(rep, reports_config.configuration_data_dict).items():
+            struct_cols_with_configs = find_struct_cols_in_config(rep, reports_config.configuration_data_dict)
+            for used_struct_col, struct_col_config in struct_cols_with_configs.items():
                 needed_struct_cols[used_struct_col] = {}
                 used_struct_col:str = used_struct_col
                 used_struct_col_ref_name = get_param(None, struct_col_config, ['using_ref'])
@@ -379,11 +380,21 @@ def start_calc(item: GeneralInfo):
                 _ex = f'Recieved group attrs len is 0. Further calculations dont make sense.'
                 raise Exception(_ex)
             
-            groups_to_calc = group_attrs[get_param(None, group_attrs_source_config, 'primary_key_columns')].drop_duplicates() # уникальные группы из источника
-            groups_to_calc = (
-                groups_to_calc[groups_to_calc['calc_id'] == calc_id]
-                .drop(columns=['calc_id'])
+            # СОЗДАЕМ ТАБЛИЦУ С ГРУППАМИ ДЛЯ РАСЧЕТОВ
+            initial_columns_from_conf = get_param(None, rep_config, 'initial_columns')
+            if initial_columns_from_conf == None:
+                _ex = f'Not found initial columns in rep_config: {rep_config.keys()}'
+                raise Exception(_ex)
+            groups_to_calc :pd.DataFrame = (
+                # ИЗ ПОЛУЧЕННЫХ ГРУПП ДОСТАЕМ ТОЛЬКО НУЖНЫЕ ПО CALC_ID:
+                group_attrs[group_attrs['calc_id'] == calc_id]
+                [initial_columns_from_conf]
             )
+            # groups_to_calc = group_attrs[get_param(None, group_attrs_source_config, 'primary_key_columns')+ list(struct_cols_with_configs.keys()) ].drop_duplicates() # уникальные группы из источника
+            # groups_to_calc = (
+            #     groups_to_calc[groups_to_calc['calc_id'] == calc_id]
+            #     .drop(columns=['calc_id'])
+            # )
             rlog.debug(f'groups_to_calc:\n{groups_to_calc}')
             save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), groups_to_calc, f'grs_to_calc') if IS_DEBUG else None
             amount_amt_group_results_columns = get_param(None, group_results_source_config, 'amount_columns')
@@ -413,20 +424,24 @@ def start_calc(item: GeneralInfo):
             metrics_by_groups = {}
             for index, group_row in groups_to_calc.iterrows():
                 group_id = group_row['group_id']
-                group_with_attrs_df = group_attrs[group_attrs['group_id']==group_id]
-                rlog.info(f'{index+1}. Started calc group "{group_id}"')
+                group_with_attrs_df = pd.DataFrame([group_row])
+                rlog.info(f'{index+1}. Started calc group "{str(group_row)}"')
 
+                # получение результатов КОНКРЕТНО ДЛЯ ДАННОЙ ГРУППЫ, ПО PRIMARY_KEY таблицы РЕЗУЛЬТАТОВ
                 current_group_results:pd.DataFrame = results_for_groups_to_calc[results_for_groups_to_calc['group_id'] == group_id].drop(columns=['group_id'])
                 rlog.debug(f'current_group_results:\n{current_group_results}')
+                
+                # расчет показателей из конструктора по группам АТРИБУТОВ ГРУПП
                 metrics_by_groups[group_id] = {}
+                metrics_by_groups[group_id]['attributes'] = group_row
                 for metr in  metrics_to_calc_from_constr:
                     filter_formula = constructor_df[constructor_df['metric_name'].str.strip() == metr]['filter_formula'].iloc[0]
                     try:
-                        rlog.debug(f'started calc formula {filter_formula}')
+                        rlog.debug(f'started calc FILTER formula {filter_formula}')
                         _filter_result:bool = parse_formula(filter_formula, group_with_attrs_df)
                     except Exception as e:
                         _filter_result = True
-                        rlog.error(f'Error while calc formula ({filter_formula}):\n{e}\nIt will be interpreted as {_filter_result}.')
+                        rlog.error(f'Error while calc FILTER formula ({filter_formula}):\n{e}\nIt will be interpreted as {_filter_result}.')
                     rlog.debug(f'calc result is {_filter_result}')
                     if _filter_result:
                         calc_formula = constructor_df[constructor_df['metric_name'].str.strip() == metr]['calc_formula'].iloc[0]
@@ -465,24 +480,29 @@ def start_calc(item: GeneralInfo):
                                         aggregated_value += param_value
                                     case True:
                                         aggregated_value -= param_value
-                            rlog.debug(f'Aggregated {metr} value = {aggregated_value}')
                             metr_value = aggregated_value
                     else:
+                        rlog.warning(f'Calc_formula for "{metr}" IGNORED cause FILTER_RESULT is FALSE.')
                         metr_value = 0
                     metrics_by_groups[group_id][metr] = metr_value
+                    rlog.debug(f'Writed "{metr}" value for current group: {metr_value}')
             calculated_metrics_df = (
                 pd.DataFrame.from_dict(metrics_by_groups, orient='index')
                 .reset_index()
                 .rename(columns={'index': 'group_id'})
                 )
+            attrs_df = pd.json_normalize(calculated_metrics_df['attributes'])
+
+            calculated_metrics_df = pd.concat([calculated_metrics_df.drop(columns=['attributes']), attrs_df], axis=1)
+
             save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), calculated_metrics_df, f'calculated_metrics_df') if IS_DEBUG else None
-            calculated_metrics_df = (
-                calculated_metrics_df
-                .melt(id_vars=['group_id'],
-                    value_vars=[col for col in calculated_metrics_df.columns if col not in ['group_id']],
-                    var_name='amount_type_cd',
-                    value_name='amount_amt'
-                    )
+            id_vars = ['group_id'] + list(attrs_df.columns)
+            value_vars = [col for col in calculated_metrics_df.columns if col not in id_vars]
+            calculated_metrics_df = calculated_metrics_df.melt(
+                id_vars=id_vars,
+                value_vars=value_vars,
+                var_name='amount_type_cd',
+                value_name='amount_amt'
             )
             rlog.debug(f'calculated metrics:\n{calculated_metrics_df}')
             save_df_to_excel(Path(create_path_if_not_exists(Path(MODULE_OUTPUT_PATH)), OUTPUT_FILE_PATH), calculated_metrics_df, f'calculated_metrics_melted') if IS_DEBUG else None
