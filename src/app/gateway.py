@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+import os
 from config.config import VERSIONS
 from config.log_config import setup_logging
 from src.model.interface import GeneralInfo
@@ -214,3 +215,18 @@ async def drop_uploaded_file_by_id(
     except Exception as e:
         app_log.error(f'Error drop_file_by_id: {str(e)}')
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/download", tags=['file_manager'])
+async def download_file(file_id: int):
+    crud = JSONCrud()
+    founded_file = crud.get_by_id(file_id)
+    if founded_file != None:
+        file_path = Path(founded_file.filename)
+        if os.path.exists(file_path):
+            return FileResponse(
+                path=file_path,
+                filename=file_path.name,
+                media_type="application/octet-stream" # универсальный тип
+            )
+    return {"error": "File not found"}
