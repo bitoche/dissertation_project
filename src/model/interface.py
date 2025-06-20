@@ -15,7 +15,7 @@ class GeneralInfo(BaseModel):
     report_date: str
     actual_date: str
     prev_report_date: str
-    json_configuration_id: int
+    configuration_file_id: int
     reports_to_calc: list[str] # список отчетов, которые надо рассчитать, должна быть определены в конфигурации. например ["ABC", "XYZ"]
 
     def is_valid(self):
@@ -27,7 +27,7 @@ class GeneralInfo(BaseModel):
             if meta == None:
                 errors.append({"by_check":"CONFIGURATION FILE META","message": f'configuration file not found in uploads meta info file'})
             if meta.is_active == False:
-                errors.append({"by_check":"CONFIGURATION FILE META","message": f'ERROR: try to use deactivated reports JSON configuration'})
+                errors.append({"by_check":"CONFIGURATION FILE META","message": f'ERROR: try to use deactivated reports configuration'})
         except:
             errors.append({"by_check":"UPLOADS META FILE","message": f'cant read meta file. check logs for more info'})
         try:

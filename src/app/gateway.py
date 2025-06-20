@@ -84,6 +84,7 @@ async def start_calculation(item: GeneralInfo):
 
 from pathlib import Path 
 import json
+import yaml
 from enum import Enum
 
 class SUPPORTED_FILE_TYPE(Enum):
@@ -106,7 +107,8 @@ async def upload_file(
         if file_type == SUPPORTED_FILE_TYPE.CONF:
             app_log.info(f"Started validation for loaded configuration: {meta_info.filename}")
             with open(file_path, "r") as f:
-                config_data = json.load(f)
+                # config_data = json.load(f)
+                config_data = yaml.safe_load(f)
             validated = True if check_logic_of_configuration(config_data, ignore_errors=True)=='ok' else False
         elif file_type == SUPPORTED_FILE_TYPE.CONSTR:
             app_log.info(f"Started validation for loaded constructor: {meta_info.filename}")

@@ -45,7 +45,8 @@ class MetaFileInfo:
 class FileStorageManager:
     VALID_FILE_TYPES = {"conf", "ref", "constr"}
     VALID_EXTENSIONS = {
-        "conf": ".json",
+        # "conf": ".json",
+        "conf": ".yaml",
         "ref": ".xlsx",
         "constr": ".xlsx"
     }
@@ -134,13 +135,19 @@ class JSONCrud:
 
     def get_by_id(self, item_id: int) -> MetaFileInfo:
         """Возвращает активный объект по его id."""
-        logger.info(f'Started get by id = {item_id} from json')
+        item_id = int(item_id)
+        logger.info(f'Started get by id = {item_id} from metafile')
         with open(self.filename, "r") as f:
             data = json.load(f)
         for item in data:
-            if item["id"] == item_id and item.get("is_active", True):
-                return MetaFileInfo.from_dict(item)
-        logger.warning(f"Item with id {item_id} not found or inactive")
+            logger.debug(f'checking "{item}"')
+            if item["id"] == item_id:
+                if item.get("is_active", True):
+                    return MetaFileInfo.from_dict(item)
+                else:
+                    logger.warning(f"Item with id {item_id} inactive - DELETED")
+                    break
+        logger.warning(f"Item with id {item_id} not found in metafile")
         return None
         # raise ValueError(f"Item with id {item_id} not found or inactive")
 

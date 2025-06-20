@@ -1,4 +1,5 @@
 import json
+import yaml
 from src.handlers import replace_all, get_param
 from pathlib import Path
 from config.config import ModuleConfig
@@ -11,7 +12,8 @@ def read_configuration_file(filename:str):
     configuration_file_data = {}
     try:
         with open(configuration_file_path, 'r') as f:
-            d = json.load(f)
+            # d = json.load(f)
+            d = yaml.safe_load(f)
         configuration_file_data = d
     except Exception as e:
         logger.error(f'Cant read configuration file from {configuration_file_path}')
