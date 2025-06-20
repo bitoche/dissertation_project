@@ -5,7 +5,7 @@
         "id": 1,
         "file_type": "conf",
         "add_dttm": "2025-06-10T23:35:48.765211",
-        "is_active": true
+        "is_active": false
     },
     {
         "filename": "/app/input_files/storage/constr/2_constructor_rep_amt.xlsx",
