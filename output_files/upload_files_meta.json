@@ -102,5 +102,13 @@
         "file_type": "ref",
         "add_dttm": "2025-06-11T00:31:57.967504",
         "is_active": true
+    },
+    {
+        "filename": "/app/input_files/storage/conf/14_reports_config_11062025.yaml",
+        "file_desc": "YAML configuration",
+        "id": 14,
+        "file_type": "conf",
+        "add_dttm": "2025-06-20T10:58:02.019714",
+        "is_active": true
     }
 ]
