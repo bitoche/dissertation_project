@@ -1,11 +1,12 @@
+name: reports_service
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: diss_api
+    container_name: constructor_calculator
     ports:
-      - "5000:5000"
+      - "5000:5000" # закрыть внешний порт при включении в систему калькуляторов
     env_file:
       - .env
     volumes:
@@ -16,8 +17,8 @@ services:
       - ./src:/app/src # изменения исходного кода применяются сразу после restart-а без сборки
       - ./.env:/app/.env # для быстрой замены значений в .env
     networks:
-      - ifrs17-network
+      - reports_service_network
 
 networks:
-  ifrs17-network:
+  reports_service_network:
     driver: bridge
